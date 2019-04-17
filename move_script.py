@@ -2,13 +2,18 @@
 return Twist objects that are used to direct the robot
 """
 import math
-from geometry_msgs.msg import Twist
+
 import cool_math as cm
+# uncomment later!
+from geometry_msgs.msg import Twist
+
 # constant for speed 
 LIN_SPEED = 0.2  # 0.2 m/s
 ROT_SPEED = math.radians(45)  # 45 deg/s in radians/s
 ROT_K = 5  # Constant for proportional angular velocity control
 LIN_K = 0.5  # Constant for proportional linear velocity control
+
+    
 
 class MoveMaker:
     def __init__(self):
@@ -16,7 +21,6 @@ class MoveMaker:
         self.move_cmd = Twist()
         self.position = [0,0]
         self.orientation = 0
-        self.AR_q = {}
         self.AR_close = False
 
     def wander(self):
@@ -37,13 +41,13 @@ class MoveMaker:
         return self.move_cmd
 
     # --------- ARTags ------------------#
-    def choose_AR(self):
+    def choose_AR(self, my_dict):
         """
         Get the key of the closest ARTag from a dictionary ARTags that have structure (self.AR_q):
         (key, [(pos.x,.y.z)at the time seen, robot's orientation at the time seen, 'unvisited'])
         """
         unvisited = []
-        for item in self.AR_q.items():
+        for item in my_dict.items():
             if (item[1][2] == 'unvisited'):
                 unvisited.append(item)
         # for checking 
@@ -65,7 +69,7 @@ class MoveMaker:
 
         return the_key
     
-    def go_to_AR(self, the_key):
+    def go_to_AR(self, my_dict, my_key):
         """
         Go to the AR_tag
         """
@@ -95,13 +99,13 @@ class MoveMaker:
 
         return self.move_cmd
     
-    def handle_AR(self, my_key):
+    def handle_AR(self,my_dict, my_key):
         print "handle AR"
         self.move_cmd.linear.x = 0
         self.move_cmd.angular.z = 0
 
         # set the ARTag that has been visited to indicate this 
-        curr_tag = self.AR_q.get(my_key)
+        curr_tag = my_dict.get(my_key)
         curr_tag[2] = 'visited'
 
         return self.move_cmd

@@ -33,45 +33,46 @@ if __name__ == '__main__':
     
     # print sub_list
  
-    pos1 = (3, 20, 1)
-    pos2 = (3,4,5)
-    pos3 = (1,1,1)
-    orr = 1
-    key = 12
-    key1 = 13
-    key2 =14
-    my_pos = (0,0)
+#     pos1 = (3, 20, 1)
+#     pos2 = (3,4,5)
+#     pos3 = (1,1,1)
+#     orr = 1
+#     key = 12
+#     key1 = 13
+#     key2 =14
+#     my_pos = (0,0)
     
- # new list of all the distances in the list of ARTags that have not been visited 
-    unvisited = [(key, [pos1, orr, 'hello']),
-                (key1, [pos2, orr, 'hello']),
-                (key2, [pos3, orr, 'hello'])]
-    close = []
-    for i in unvisited:
-        pos = (i[1][0][0] , i[1][0][1])
-        curr_dist = cm.dist_btwn(pos, my_po0s)
-        close.append([i, curr_dist])
+#  # new list of all the distances in the list of ARTags that have not been visited 
+#     unvisited = [(key, [pos1, orr, 'hello']),
+#                 (key1, [pos2, orr, 'hello']),
+#                 (key2, [pos3, orr, 'hello'])]
+#     close = []
+#     for i in unvisited:
+#         pos = (i[1][0][0] , i[1][0][1])
+#         curr_dist = cm.dist_btwn(pos, my_po0s)
+#         close.append([i, curr_dist])
 
-    # actually reorder from smallest to largest distance 
-    close.sort(reverse = True)
+#     # actually reorder from smallest to largest distance 
+#     close.sort(reverse = True)
 
-    #print close
+#     #print close
     
-    # close is sorted smallest to large, but its index in unvisited was saved 
-    print "the one:"
-    the_key = close[0][0][0]
-    print the_key
+#     # close is sorted smallest to large, but its index in unvisited was saved 
+#     print "the one:"
+#     the_key = close[0][0][0]
+#     print the_key
     
-    my_dict = dict(unvisited)
+#     my_dict = dict(unvisited)
 
-    print "the chosen one:"
-    print my_dict.get(the_key)
+#     print "the chosen one:"
+#     print my_dict.get(the_key)
     
 
     # returns [(1, 1, 1), 1, 'hello']
 
-    
-   
+obj = []
+obj.a = lambda: None
+setattr(obj.a, 'somefield', 'somevalue')
 
-
+print obj.a
 

@@ -57,7 +57,7 @@ class Main:
         
 
         # key of AR_TAG we are concerned with 
-        self.AR_curr = None
+        self.AR_curr = -1
         # lets it be know that an ARTAG is very close 
         self.AR_close = False
 
@@ -71,7 +71,6 @@ class Main:
         self.mover = move_script.MoveMaker()
         self.mover.position = self.position
         self.mover.orientation = self.orientation
-        self.mover.AR_q = self.AR_q
         self.mover.AR_close = self.AR_close
 
         # # ---- rospy stuff ----
@@ -148,8 +147,8 @@ class Main:
 
                 # if there are ARTags that have not yet been visited, choose one to visit 
                 if (len(self.AR_q) is not 0 and all(x[2] == 'unvisited' for x in self.AR_q.values())):
-                    self.AR_curr = self.mover.choose_AR() 
-                    print "current ar tag:"
+                    self.AR_curr = self.mover.choose_AR(self.AR_q) 
+                    print "CURRENT AR TAG:"
                     print self.AR_curr
                     # robot will now go to AR tag 
                     self.prev_state = 'wander'
@@ -172,7 +171,7 @@ class Main:
 
             # handle AR_tags 
             if (self.state == 'go_to_AR'):
-                move_cmd = self.mover.go_to_AR(self.AR_curr)
+                move_cmd = self.mover.go_to_AR(self.AR_q, self.AR_curr)
                 # only want to do the ARtag procedure when we are close enough to the AR tags 
                 if (self.AR_close == True):
                     self.prev_state = 'go_to_AR'
@@ -204,8 +203,8 @@ class Main:
             if marker.id in VALID_IDS:
                 pos = marker.pose.pose.position # what is this relative to -- robot at that time - who is the origin 
                 # for checking 
-                print "pos:"
-                print pos
+                # print "pos:"
+                # print pos
 
                 distance = cm.dist((pos.x, pos.y, pos.z))
                 # want to keep track of the distance between robot and AR_tag, but also robot's orientation at the time 
