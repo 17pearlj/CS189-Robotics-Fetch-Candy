@@ -25,6 +25,8 @@ import map_script
 import move_script
 import cool_math as cm 
 
+# valid ids for AR Tags
+VALID_IDS = range(18)
 
 
 
@@ -196,7 +198,7 @@ class Main:
         :param data: AlvarMarkers message telling you where multiple individual AR tags are
         :return: None
         """
-        print "ARRRR" # for checking 
+
         # Set the position for all the markers that are in the received message
         for marker in data.markers:
             if marker.id in VALID_IDS:

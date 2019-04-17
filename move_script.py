@@ -3,7 +3,7 @@ return Twist objects that are used to direct the robot
 """
 import math
 from geometry_msgs.msg import Twist
-
+import cool_math as cm
 # constant for speed 
 LIN_SPEED = 0.2  # 0.2 m/s
 ROT_SPEED = math.radians(45)  # 45 deg/s in radians/s
@@ -38,10 +38,10 @@ class MoveMaker:
 
     # --------- ARTags ------------------#
     def choose_AR(self):
-    """
-    Get the key of the closest ARTag from a dictionary ARTags that have structure (self.AR_q):
-    (key, [(pos.x,.y.z)at the time seen, robot's orientation at the time seen, 'unvisited'])
-    """
+        """
+        Get the key of the closest ARTag from a dictionary ARTags that have structure (self.AR_q):
+        (key, [(pos.x,.y.z)at the time seen, robot's orientation at the time seen, 'unvisited'])
+        """
         unvisited = []
         for item in self.AR_q.items():
             if (item[1][2] == 'unvisited'):
@@ -52,7 +52,7 @@ class MoveMaker:
         # new list of all the distances in the list of ARTags that have not been visited 
         close = []
         for i in unvisited:
-            pos = (i[1][0][0] , i[1][0][1])
+            pos = (i[1][0].x , i[1][0].x)
             curr_dist = cm.dist_btwn(pos, self.position)
             # list of dictionary items, and their distances 
             close.append([i, curr_dist])

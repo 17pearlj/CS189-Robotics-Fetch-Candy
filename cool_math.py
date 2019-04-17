@@ -41,7 +41,7 @@ def centroid(contour):
 
     return centroid_x(contour), centroid_y(contour)
 
-def dist(self, pos):
+def dist(pos):
     """
     Get a the distance to a position from the origin. This can be any number of dimensions
     :param pos: Tuple of position
