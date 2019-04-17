@@ -14,6 +14,11 @@ class MoveMaker:
     def __init__(self):
         # movement command that will be sent to robot 
         self.move_cmd = Twist()
+        self.position = [0,0]
+        self.orientation = 0
+        self.AR_q = {}
+        self.AR_close = False
+
     def wander(self):
         self.move_cmd.linear.x = LIN_SPEED
         self.move_cmd.angular.z = 0
@@ -33,17 +38,70 @@ class MoveMaker:
 
     # --------- ARTags ------------------#
     def choose_AR(self):
-        print "choose AR"
-        return 0
+    """
+    Get the key of the closest ARTag from a dictionary ARTags that have structure (self.AR_q):
+    (key, [(pos.x,.y.z)at the time seen, robot's orientation at the time seen, 'unvisited'])
+    """
+        unvisited = []
+        for item in self.AR_q.items():
+            if (item[1][2] == 'unvisited'):
+                unvisited.append(item)
+        # for checking 
+        print unvisited 
+
+        # new list of all the distances in the list of ARTags that have not been visited 
+        close = []
+        for i in unvisited:
+            pos = (i[1][0][0] , i[1][0][1])
+            curr_dist = cm.dist_btwn(pos, self.position)
+            # list of dictionary items, and their distances 
+            close.append([i, curr_dist])
+
+        # actually reorder from smallest to largest distance 
+        close.sort(reverse = True)
+        
+        # close is sorted smallest to large -> key into the dictionary
+        the_key = close[0][0][0]
+
+        return the_key
     
-    def go_to_AR(self):
+    def go_to_AR(self, the_key):
+        """
+        Go to the AR_tag
+        """
+
         print "go to AR"
-        self.move_cmd.linear.x = 0
-        self.move_cmd.angular.z = 0
+        # get the orientation of robot at the time ar tag was seen 
+        curr_tag = my_dict.get(my_key)
+        tag_orr = curr_tag[1]
+        tag_pos = (curr_tag[0][0], curr_tag[0][1])
+
+        # get the difference between this orientation and my current orientation 
+        angle_diff = cm.angle_compare(tag_orr, self.orientation)
+        # determine turn angle with proportional control
+        prop_angle = abs(angle_diff) * ROT_K
+        # choose angle that requires minimal turning 
+        turn_angle = cm.sign(angle_diff) * min(prop_angle, ROT_SPEED)
+
+        # change turn angle to approach the ARTag
+        move_cmd.angular.z = turn_angle
+
+        # proportional control to approach the ARTag based on current distance
+        curr_dist = cm.dist_btwn(self.position, tag_pos)
+        move_cmd.linear.x = min(LIN_SPEED, currdist * LIN_K)
+        if destination_dist < 0.05:
+                # Consider destination reached if within 5 cm
+                self.AR_close= True
+
         return self.move_cmd
     
-    def handle_AR(self):
+    def handle_AR(self, my_key):
         print "handle AR"
         self.move_cmd.linear.x = 0
         self.move_cmd.angular.z = 0
+
+        # set the ARTag that has been visited to indicate this 
+        curr_tag = self.AR_q.get(my_key)
+        curr_tag[2] = 'visited'
+
         return self.move_cmd

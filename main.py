@@ -30,18 +30,9 @@ import cool_math as cm
 
 class Main:
     def __init__(self):
-        # mapping object will come from imported module 
-        self.mapper = map_script.MapMaker()
-
-        # moving object will come from imported module 
-        self.mover = move_script.MoveMaker()
-
         # information about the robot's current position and orientation relative to start
         self.position = [0,0]
         self.orientation = 0 # CCW +, radians 
-        # imported mapper will use this position and orientation 
-        self.mapper.position = self.position
-        self.mapper.orientation = self.orientation
 
         # the initialized state, and prev state is 'wander'
         self.state = 'wander'
@@ -61,11 +52,25 @@ class Main:
         # tag_id: [distace, orientation] key-value pairs for ARTags
         self.markers = {} # dictionary holding all ARTags currently seen
         self.AR_q = {} # dictionary holding all ARTags ever seen
+        
 
-        # current AR_TAG we are concerned with 
+        # key of AR_TAG we are concerned with 
         self.AR_curr = None
         # lets it be know that an ARTAG is very close 
         self.AR_close = False
+
+
+        # mapping object will come from imported module 
+        self.mapper = map_script.MapMaker()
+        self.mapper.position = self.position
+        self.mapper.orientation = self.orientation
+
+        # moving controls will come from imported module 
+        self.mover = move_script.MoveMaker()
+        self.mover.position = self.position
+        self.mover.orientation = self.orientation
+        self.mover.AR_q = self.AR_q
+        self.mover.AR_close = self.AR_close
 
         # # ---- rospy stuff ----
         # Initialize the node
@@ -103,16 +108,7 @@ class Main:
         # TurtleBot will stop if we don't keep telling it to move.  How often should we tell it to move? 5 Hz
         self.rate = rospy.Rate(5)
     
-    def choose_AR(self):
-        # want to create a smaller dictionary of all the ar_tags that have not been visited 
-        #unvisited = [all(x[2] != 'visited' for x in self.AR_q.values())]
 
-        # reorder these according to there distance from the current location of the robot!
-
-        # return the closest one
-        chosen_one = list(self.AR_q.keys())[0] 
-        
-        return chosen_one
 
     def run(self):
         """
@@ -131,13 +127,12 @@ class Main:
              
             #move_cmd = None
             if (self.state is not 'wander'):
-                print self.state
+                print self.state  
             
             while (self.state == 'wander'):
                 # just wandering around 
                 move_cmd = self.mover.wander()
-              
-
+            
                 # current location will always be free :)
                 #self.mapper.updateMapFree()
                 
@@ -150,10 +145,9 @@ class Main:
                 #     self.mapper.updateMapAR()
 
                 # if there are ARTags that have not yet been visited, choose one to visit 
-
-                if (len(self.AR_q) is not 0 and all(x[2] != 'visited' for x in self.AR_q.values())):
-                    self.AR_curr = self.choose_AR() # should only return valid values if there is an AR to go to 
-                    print "current ar tag"
+                if (len(self.AR_q) is not 0 and all(x[2] == 'unvisited' for x in self.AR_q.values())):
+                    self.AR_curr = self.mover.choose_AR() 
+                    print "current ar tag:"
                     print self.AR_curr
                     # robot will now go to AR tag 
                     self.prev_state = 'wander'
@@ -176,7 +170,7 @@ class Main:
 
             # handle AR_tags 
             if (self.state == 'go_to_AR'):
-                move_cmd = self.mover.go_to_AR()
+                move_cmd = self.mover.go_to_AR(self.AR_curr)
                 # only want to do the ARtag procedure when we are close enough to the AR tags 
                 if (self.AR_close == True):
                     self.prev_state = 'go_to_AR'
@@ -195,53 +189,39 @@ class Main:
 
 # ------------------ Functions telling us about the robot ---------------- #     
 
-    def process_ekf(self, data):
-        """
-        Process a message from the robot_pose_ekf and save position & orientation to the parameters
-        :param data: PoseWithCovarianceStamped from EKF
-        """
-        # Extract the relevant covariances (uncertainties).
-        # Note that these are uncertainty on the robot VELOCITY, not position
-        cov = np.reshape(np.array(data.pose.covariance), (6, 6))
-        x_var = cov[0, 0]
-        y_var = cov[1, 1]
-        rot_var = cov[5, 5]
-        # You can print these or integrate over time to get the total uncertainty
-        
-        # Save the position and orientation
-        pos = data.pose.pose.position
-        self.position = (pos.x, pos.y)
-        orientation = data.pose.pose.orientation
-        list_orientation = [orientation.x, orientation.y, orientation.z, orientation.w]
-        self.orientation = tf.transformations.euler_from_quaternion(list_orientation)[-1]
-            
+
     def process_ar_tags(self, data):
         """
         Process the AR tag information.
         :param data: AlvarMarkers message telling you where multiple individual AR tags are
         :return: None
         """
-        print "ARRRR"
+        print "ARRRR" # for checking 
         # Set the position for all the markers that are in the received message
         for marker in data.markers:
             if marker.id in VALID_IDS:
-                pos = marker.pose.pose.position
-                distance = self.dist((pos.x, pos.y, pos.z))
+                pos = marker.pose.pose.position # what is this relative to -- robot at that time - who is the origin 
+                # for checking 
+                print "pos:"
+                print pos
+
+                distance = cm.dist((pos.x, pos.y, pos.z))
                 # want to keep track of the distance between robot and AR_tag, but also robot's orientation at the time 
-                self.markers[marker.id] = [distance, self.orientation, "not_visited"]
+                # and whether or not the AR_tag has been visited 
+                # going to do this in seperate dictionaries for now
+                self.markers[marker.id] = distance
+                self.AR_q[marker.id] = [pos, self.orientation, 'unvisited']
+
         # Set the position to None for all the previously seen markers that weren't in the message
         all_seen_ids = self.markers.keys()
         seen_now_ids = [m.id for m in data.markers]
         missing_ids = list(set(all_seen_ids) - set(seen_now_ids))
-        # Want to keep track of all ARTags ever seen also 
-        self.AR_q = self.markers
 
-        # Lets us know about only ARTags seen currently
+        # Lets us know about only ARTags seen currently, to update map as needed 
         self.markers.update(dict.fromkeys(missing_ids, None))
         if (len (self.markers) > 0):
             self.AR_seen = True
-        
-        # decide wether ARTags have been seen or not 
+
 
         
     def print_markers(self):
@@ -263,7 +243,26 @@ class Main:
                 print "Previously seen tags:", ', '.join([str(i) for i in missing_ids])
         print '----------------------------------------------------'
 
-    
+    def process_ekf(self, data):
+        """
+        Process a message from the robot_pose_ekf and save position & orientation to the parameters
+        :param data: PoseWithCovarianceStamped from EKF
+        """
+        # Extract the relevant covariances (uncertainties).
+        # Note that these are uncertainty on the robot VELOCITY, not position
+        cov = np.reshape(np.array(data.pose.covariance), (6, 6))
+        x_var = cov[0, 0]
+        y_var = cov[1, 1]
+        rot_var = cov[5, 5]
+        # You can print these or integrate over time to get the total uncertainty
+        
+        # Save the position and orientation
+        pos = data.pose.pose.position
+        self.position = (pos.x, pos.y)
+        orientation = data.pose.pose.orientation
+        list_orientation = [orientation.x, orientation.y, orientation.z, orientation.w]
+        self.orientation = tf.transformations.euler_from_quaternion(list_orientation)[-1]
+            
     def bound_object(self, img_in):
         """
         - Draws a bounding box around the largest object in the scene and returns
