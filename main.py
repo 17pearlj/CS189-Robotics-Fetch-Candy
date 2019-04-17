@@ -9,7 +9,7 @@ from math import radians, degrees
 import cv2
 import numpy as np
 
-imports for rospy
+#imports for rospy
 import rospy
 from geometry_msgs.msg import Twist
 import tf
@@ -122,53 +122,60 @@ class Main:
         """
         # for testing on mac
         # i = 0
-        while not rospy.shutdown(): #replace with rospy.spin
+        while not rospy.is_shutdown(): #replace with rospy.spin
             # print i
             # i+=1
             # one twist object will be shared by all the states 
             move_cmd = Twist()
+            self.print_markers()
              
             #move_cmd = None
+            if (self.state is not 'wander'):
+                print self.state
             
             while (self.state == 'wander'):
                 # just wandering around 
                 move_cmd = self.mover.wander()
+              
 
                 # current location will always be free :)
-                self.mapper.updateMapFree()
+                #self.mapper.updateMapFree()
                 
-                # this info will come from depth senor processing
-                if (self.obstacle_seen == True):
-                    self.mapper.updateMapObstacle()
+                # # this info will come from depth senor processing
+                # if (self.obstacle_seen == True):
+                #     self.mapper.updateMapObstacle()
 
-                # map the ARTAG using info from ARTAG sensor stored in self
-                elif (self.AR_seen == True): 
-                    self.mapper.updateMapAR()
-``
+                # # map the ARTAG using info from ARTAG sensor stored in self
+                # elif (self.AR_seen == True): 
+                #     self.mapper.updateMapAR()
+
                 # if there are ARTags that have not yet been visited, choose one to visit 
 
-                elif (len(self.AR_q) is not 0 and all(x[2] != 'visited' for x in self.AR_q.values())):
+                if (len(self.AR_q) is not 0 and all(x[2] != 'visited' for x in self.AR_q.values())):
                     self.AR_curr = self.choose_AR() # should only return valid values if there is an AR to go to 
                     print "current ar tag"
                     print self.AR_curr
                     # robot will now go to AR tag 
                     self.prev_state = 'wander'
                     self.state = 'go_to_AR'
+
+                self.cmd_vel.publish(move_cmd)
+                self.rate.sleep()
                     
                     
             # handle obstacles and bumps that interrupt work flow
             # return to previous state after bumping
             # never want prev state to be avoiding obstacles
-            if (self.state == 'avoid_obstacle' or self.state == 'bumped'):
-                if (self.state == 'bumped'):
-                    move_cmd = self.mover.bumped()           
-                    self.state = self.prev_state
-                else:
-                    move_cmd = self.mover.avoid_obstacle() 
-                    self.state = self.prev_state
+            # if (self.state == 'avoid_obstacle' or self.state == 'bumped'):
+            #     if (self.state == 'bumped'):
+            #         move_cmd = self.mover.bumped()           
+            #         self.state = self.prev_state
+            #     else:
+            #         move_cmd = self.mover.avoid_obstacle() 
+            #         self.state = self.prev_state
 
             # handle AR_tags 
-            elif (self.state == 'go_to_AR'):
+            if (self.state == 'go_to_AR'):
                 move_cmd = self.mover.go_to_AR()
                 # only want to do the ARtag procedure when we are close enough to the AR tags 
                 if (self.AR_close == True):
@@ -208,12 +215,13 @@ class Main:
         list_orientation = [orientation.x, orientation.y, orientation.z, orientation.w]
         self.orientation = tf.transformations.euler_from_quaternion(list_orientation)[-1]
             
-        def process_ar_tags(self, data):
+    def process_ar_tags(self, data):
         """
         Process the AR tag information.
         :param data: AlvarMarkers message telling you where multiple individual AR tags are
         :return: None
         """
+        print "ARRRR"
         # Set the position for all the markers that are in the received message
         for marker in data.markers:
             if marker.id in VALID_IDS:
@@ -236,24 +244,24 @@ class Main:
         # decide wether ARTags have been seen or not 
 
         
-        def print_markers(self):
-            """
-            Print a nicely-formatted presentation of all the tags ever seen
-            :return: None
-            """
-            if len(self.markers) == 0:
-                print "\nNo markers seen"
-            else:
-                print "\nMARKERS:"
-                missing_ids = []
-                for tag_id, dist in self.markers.iteritems():
-                    if dist is not None:
-                        print "{}:\t{:.2f} m".format(tag_id, dist)
-                    else:
-                        missing_ids.append(tag_id)
-                if len(missing_ids) > 0:
-                    print "Previously seen tags:", ', '.join([str(i) for i in missing_ids])
-            print '----------------------------------------------------'
+    def print_markers(self):
+        """
+        Print a nicely-formatted presentation of all the tags ever seen
+        :return: None
+        """
+        if len(self.markers) == 0:
+            print "\nNo markers seen"
+        else:
+            print "\nMARKERS:"
+            missing_ids = []
+            for tag_id, dist in self.markers.iteritems():
+                if dist is not None:
+                    print "{}:\t{:.2f} m".format(tag_id, dist)
+                else:
+                    missing_ids.append(tag_id)
+            if len(missing_ids) > 0:
+                print "Previously seen tags:", ', '.join([str(i) for i in missing_ids])
+        print '----------------------------------------------------'
 
     
     def bound_object(self, img_in):
@@ -291,7 +299,7 @@ class Main:
 
             # obstacle must be even larger to get the state to be switched 
             if (w*h > 400):
-                self.state = 'avoid_obstacle'
+                #self.state = 'avoid_obstacle'
                 # Differentiate between left and right objects
                 if (x < 160):  
                     self.obstacle_side = 'left'
@@ -328,8 +336,8 @@ class Main:
             cv2.normalize(norm_img, norm_img, 0, 1, cv2.NORM_MINMAX)
 
             # Displays thresholded depth image   
-            cv2.imshow('Depth Image', norm_img)    
-            cv2.waitKey(3)
+            # cv2.imshow('Depth Image', norm_img)    
+            # cv2.waitKey(3)
 
         except CvBridgeError, err:
             rospy.loginfo(err)

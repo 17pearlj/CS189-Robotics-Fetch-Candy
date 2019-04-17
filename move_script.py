@@ -15,22 +15,21 @@ class MoveMaker:
         # movement command that will be sent to robot 
         self.move_cmd = Twist()
     def wander(self):
-        print "wander"
         self.move_cmd.linear.x = LIN_SPEED
         self.move_cmd.angular.z = 0
-        return move_cmd
+        return self.move_cmd
     
     def bumped(self):
         print "bumped"
         self.move_cmd.linear.x =  - LIN_SPEED
         self.move_cmd.angular.z = 0
-        return move_cmd
+        return self.move_cmd
     
     def avoid_obstacle(self):
         print "avoid obstacle"
         self.move_cmd.linear.x = -LIN_SPEED
-        self.move_cmd.angular.z = ROT_SPEED
-        return move_cmd
+        self.move_cmd.angular.z = 0
+        return self.move_cmd
 
     # --------- ARTags ------------------#
     def choose_AR(self):
@@ -41,10 +40,10 @@ class MoveMaker:
         print "go to AR"
         self.move_cmd.linear.x = 0
         self.move_cmd.angular.z = 0
-        return move_cmd
+        return self.move_cmd
     
     def handle_AR(self):
         print "handle AR"
         self.move_cmd.linear.x = 0
         self.move_cmd.angular.z = 0
-        return move_cmd
+        return self.move_cmd
