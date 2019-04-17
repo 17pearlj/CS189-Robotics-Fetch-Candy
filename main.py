@@ -43,9 +43,9 @@ class Main:
         self.mapper.position = self.position
         self.mapper.orientation = self.orientation
 
-        # the inistalized state is 'wander'
+        # the initialized state, and prev state is 'wander'
         self.state = 'wander'
-        self.prev_state = None
+        self.prev_state = 'wander'
 
         # depth image for getting obstacles
         self.depth_image = []
@@ -58,9 +58,10 @@ class Main:
         # booleans that help the robot avoid obstacles and react to bumps 
         self.obstacle_side = None 
 
-        # dictionary holding all ARTags ever seen
-        # tag_id: distance pairs
-        self.AR_q = {}
+        # tag_id: [distace, orientation] key-value pairs for ARTags
+        self.markers = {} # dictionary holding all ARTags currently seen
+        self.AR_q = {} # dictionary holding all ARTags ever seen
+
         # current AR_TAG we are concerned with 
         self.AR_curr = None
         # lets it be know that an ARTAG is very close 
@@ -101,17 +102,17 @@ class Main:
 
         # TurtleBot will stop if we don't keep telling it to move.  How often should we tell it to move? 5 Hz
         self.rate = rospy.Rate(5)
+    
+    def choose_AR(self):
+        # want to create a smaller dictionary of all the ar_tags that have not been visited 
+        #unvisited = [all(x[2] != 'visited' for x in self.AR_q.values())]
 
-    def execute_move(self, range_max, a_move_cmd):
-        """
-        Will perform the movement passed in for the desired amount of time
-        :param: range over which movement should be published, Twist() object
-        :return: None
-        """
-        for i in range (0, range_max):
-            self.cmd_vel.publish(a_move_cmd)
-            self.rate.sleep() # sleep w same frequency as rest of program
+        # reorder these according to there distance from the current location of the robot!
 
+        # return the closest one
+        chosen_one = list(self.AR_q.keys())[0] 
+        
+        return chosen_one
 
     def run(self):
         """
@@ -121,7 +122,7 @@ class Main:
         """
         # for testing on mac
         # i = 0
-        while rospy.spin(): #replace with rospy.spin
+        while not rospy.shutdown(): #replace with rospy.spin
             # print i
             # i+=1
             # one twist object will be shared by all the states 
@@ -132,8 +133,6 @@ class Main:
             while (self.state == 'wander'):
                 # just wandering around 
                 move_cmd = self.mover.wander()
-                self.cmd_vel.publish(move_cmd)
-                self.rate.sleep()
 
                 # current location will always be free :)
                 self.mapper.updateMapFree()
@@ -145,48 +144,47 @@ class Main:
                 # map the ARTAG using info from ARTAG sensor stored in self
                 elif (self.AR_seen == True): 
                     self.mapper.updateMapAR()
+``
+                # if there are ARTags that have not yet been visited, choose one to visit 
 
-                # TODO: have a parameter under which the correct AR tag is chosen 
-                elif (self.AR_q > 1):
-                    self.AR_curr = self.mover.choose_AR() # should only return valid values if there is an AR to go to 
+                elif (len(self.AR_q) is not 0 and all(x[2] != 'visited' for x in self.AR_q.values())):
+                    self.AR_curr = self.choose_AR() # should only return valid values if there is an AR to go to 
+                    print "current ar tag"
+                    print self.AR_curr
                     # robot will now go to AR tag 
                     self.prev_state = 'wander'
                     self.state = 'go_to_AR'
                     
                     
             # handle obstacles and bumps that interrupt work flow
+            # return to previous state after bumping
+            # never want prev state to be avoiding obstacles
             if (self.state == 'avoid_obstacle' or self.state == 'bumped'):
                 if (self.state == 'bumped'):
-                    move_cmd = self.mover.bumped()
-                    #self.execute_move(10, self.mover.bumped())
-                 
-                    # return to previous state after bumping
-                    # never want prev state to be reacting to a bump
+                    move_cmd = self.mover.bumped()           
                     self.state = self.prev_state
                 else:
                     move_cmd = self.mover.avoid_obstacle() 
-                    # self.execute_move(10, self.mover.avoid_obstacle())
-                    # publish the move_cmd
-
-                    # return to previous state
-                    # never want prev state to be avoinding obstacles
                     self.state = self.prev_state
 
+            # handle AR_tags 
             elif (self.state == 'go_to_AR'):
                 move_cmd = self.mover.go_to_AR()
-                # self.execute_move(10, self.mover.go_to_AR())
-                # publish the move_cmd
+                # only want to do the ARtag procedure when we are close enough to the AR tags 
                 if (self.AR_close == True):
                     self.prev_state = 'go_to_AR'
                     self.state == 'handle_AR'
                       
             elif (self.state == 'handle_AR'):
                 move_cmd = self.mover.handle_AR()
-                # self.execute_move(10, self.mover.handle_AR())
-                # publish the move_cmd
-                # pause for 10 seconds
                 self.prev_state = 'handle_AR'
                 self.state = 'wander'
+
+
+            # publish whichever move_cmd was chosen, and cycle through again, checking conditions
+            # and publishing the chosen move_cmd until shutdown 
+            self.cmd_vel.publish(move_cmd)
+            self.rate.sleep()
 
 # ------------------ Functions telling us about the robot ---------------- #     
 
@@ -210,27 +208,52 @@ class Main:
         list_orientation = [orientation.x, orientation.y, orientation.z, orientation.w]
         self.orientation = tf.transformations.euler_from_quaternion(list_orientation)[-1]
             
-    def process_ar_tags(self, data): # kind of ratch -- look in to!
+        def process_ar_tags(self, data):
         """
         Process the AR tag information.
-        :param: data: AlvarMarkers message telling you where multiple individual AR tags are
+        :param data: AlvarMarkers message telling you where multiple individual AR tags are
         :return: None
         """
-        # These are the only tag IDs that are being considered here
-        VALID_IDS = range(18)
-
         # Set the position for all the markers that are in the received message
         for marker in data.markers:
             if marker.id in VALID_IDS:
                 pos = marker.pose.pose.position
-                #distance = cm.dist((pos.x, pos.y, pos.z)) # care more about their position than the distance 
-                self.AR_q[marker.id] = pos
+                distance = self.dist((pos.x, pos.y, pos.z))
+                # want to keep track of the distance between robot and AR_tag, but also robot's orientation at the time 
+                self.markers[marker.id] = [distance, self.orientation, "not_visited"]
         # Set the position to None for all the previously seen markers that weren't in the message
-        all_seen_ids = self.AR_q.keys()
+        all_seen_ids = self.markers.keys()
         seen_now_ids = [m.id for m in data.markers]
         missing_ids = list(set(all_seen_ids) - set(seen_now_ids))
-        # dont want this behavior atm
-        self.AR_q.update(dict.fromkeys(missing_ids, None))
+        # Want to keep track of all ARTags ever seen also 
+        self.AR_q = self.markers
+
+        # Lets us know about only ARTags seen currently
+        self.markers.update(dict.fromkeys(missing_ids, None))
+        if (len (self.markers) > 0):
+            self.AR_seen = True
+        
+        # decide wether ARTags have been seen or not 
+
+        
+        def print_markers(self):
+            """
+            Print a nicely-formatted presentation of all the tags ever seen
+            :return: None
+            """
+            if len(self.markers) == 0:
+                print "\nNo markers seen"
+            else:
+                print "\nMARKERS:"
+                missing_ids = []
+                for tag_id, dist in self.markers.iteritems():
+                    if dist is not None:
+                        print "{}:\t{:.2f} m".format(tag_id, dist)
+                    else:
+                        missing_ids.append(tag_id)
+                if len(missing_ids) > 0:
+                    print "Previously seen tags:", ', '.join([str(i) for i in missing_ids])
+            print '----------------------------------------------------'
 
     
     def bound_object(self, img_in):

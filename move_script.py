@@ -2,7 +2,7 @@
 return Twist objects that are used to direct the robot
 """
 import math
-from geometry_msgs.msg imgiport Twist
+from geometry_msgs.msg import Twist
 
 # constant for speed 
 LIN_SPEED = 0.2  # 0.2 m/s
@@ -39,12 +39,12 @@ class MoveMaker:
     
     def go_to_AR(self):
         print "go to AR"
-        self.move_cmd.linear.x = LIN_SPEED
+        self.move_cmd.linear.x = 0
         self.move_cmd.angular.z = 0
         return move_cmd
     
     def handle_AR(self):
         print "handle AR"
-        self.move_cmd.linear.x = LIN_SPEED
+        self.move_cmd.linear.x = 0
         self.move_cmd.angular.z = 0
         return move_cmd
