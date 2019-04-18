@@ -8,7 +8,7 @@ import cool_math as cm
 from geometry_msgs.msg import Twist
 
 # constant for speed 
-LIN_SPEED = 0.2  # 0.2 m/s
+LIN_SPEED = 0.2/2  # 0.2 m/s
 ROT_SPEED = math.radians(45)  # 45 deg/s in radians/s
 ROT_K = 5  # Constant for proportional angular velocity control
 LIN_K = 0.5  # Constant for proportional linear velocity control
@@ -29,15 +29,13 @@ class MoveMaker:
         return self.move_cmd
     
     def bumped(self):
-        print "bumped"
         self.move_cmd.linear.x =  - LIN_SPEED
         self.move_cmd.angular.z = 0
         return self.move_cmd
     
     def avoid_obstacle(self):
-        print "avoid obstacle"
-        self.move_cmd.linear.x = -LIN_SPEED
-        self.move_cmd.angular.z = 0
+        #self.move_cmd.linear.x = -LIN_SPEED
+        self.move_cmd.angular.z = radians(30)
         return self.move_cmd
 
     # --------- ARTags ------------------#
@@ -69,33 +67,40 @@ class MoveMaker:
 
         return the_key
     
-    def go_to_AR(self, my_dict, my_key):
+    def go_to_AR(self, my_dict, my_key, my_orr):
         """
         Go to the AR_tag
+        look at x and z 
         """
 
-        print "go to AR"
         # get the orientation of robot at the time ar tag was seen 
         curr_tag = my_dict.get(my_key)
         tag_orr = curr_tag[1]
-        tag_pos = (curr_tag[0][0], curr_tag[0][1])
+        tag_pos = (curr_tag[0].x, curr_tag[0].z)
 
         # get the difference between this orientation and my current orientation 
-        angle_diff = cm.angle_compare(tag_orr, self.orientation)
+        angle_diff = cm.angle_compare(tag_orr, my_orr)
         # determine turn angle with proportional control
         prop_angle = abs(angle_diff) * ROT_K
         # choose angle that requires minimal turning 
         turn_angle = cm.sign(angle_diff) * min(prop_angle, ROT_SPEED)
+        print 'turn angle:'
+        print turn_angle
+        # print "sel orr in move-script"
+        # print math.degrees(my_orr)
+        
 
         # change turn angle to approach the ARTag
-        move_cmd.angular.z = turn_angle
+        self.move_cmd.angular.z = turn_angle
 
         # proportional control to approach the ARTag based on current distance
         curr_dist = cm.dist_btwn(self.position, tag_pos)
-        move_cmd.linear.x = min(LIN_SPEED, currdist * LIN_K)
-        if destination_dist < 0.05:
+        self.move_cmd.linear.x = min(LIN_SPEED, curr_dist * LIN_K)
+        if curr_dist < 0.05:
                 # Consider destination reached if within 5 cm
+                print "WE OUT HERE"
                 self.AR_close= True
+                self.move_cmd.angular.z = 0
 
         return self.move_cmd
     

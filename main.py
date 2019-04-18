@@ -70,7 +70,6 @@ class Main:
         # moving controls will come from imported module 
         self.mover = move_script.MoveMaker()
         self.mover.position = self.position
-        self.mover.orientation = self.orientation
         self.mover.AR_close = self.AR_close
 
         # # ---- rospy stuff ----
@@ -120,15 +119,18 @@ class Main:
         # for testing on mac
         # i = 0
         while not rospy.is_shutdown(): #replace with rospy.spin
+            
             # print i
             # i+=1
             # one twist object will be shared by all the states 
             move_cmd = Twist()
-            self.print_markers()
+            # self.print_markers()
              
             #move_cmd = None
-            if (self.state is not 'wander'):
-                print self.state  
+            # print "self orr in main, degrees"
+            # print math.degrees(self.orientation)
+            # if (self.state is not 'wander'):
+            #      print self.state  
             
             while (self.state == 'wander'):
                 # just wandering around 
@@ -161,17 +163,17 @@ class Main:
             # handle obstacles and bumps that interrupt work flow
             # return to previous state after bumping
             # never want prev state to be avoiding obstacles
-            # if (self.state == 'avoid_obstacle' or self.state == 'bumped'):
-            #     if (self.state == 'bumped'):
-            #         move_cmd = self.mover.bumped()           
-            #         self.state = self.prev_state
-            #     else:
-            #         move_cmd = self.mover.avoid_obstacle() 
-            #         self.state = self.prev_state
+            if (self.state == 'avoid_obstacle' or self.state == 'bumped'):
+                if (self.state == 'bumped'):
+                    move_cmd = self.mover.bumped()           
+                    self.state = self.prev_state
+                else:
+                    move_cmd = self.mover.avoid_obstacle() 
+                    self.state = self.prev_state
 
             # handle AR_tags 
-            if (self.state == 'go_to_AR'):
-                move_cmd = self.mover.go_to_AR(self.AR_q, self.AR_curr)
+            elif (self.state == 'go_to_AR'):
+                move_cmd = self.mover.go_to_AR(self.AR_q, self.AR_curr, self.orientation)
                 # only want to do the ARtag procedure when we are close enough to the AR tags 
                 if (self.AR_close == True):
                     self.prev_state = 'go_to_AR'
@@ -185,6 +187,7 @@ class Main:
 
             # publish whichever move_cmd was chosen, and cycle through again, checking conditions
             # and publishing the chosen move_cmd until shutdown 
+
             self.cmd_vel.publish(move_cmd)
             self.rate.sleep()
 
