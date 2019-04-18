@@ -109,6 +109,11 @@ class MoveMaker:
         self.move_cmd.linear.x = 0
         self.move_cmd.angular.z = math.radians(180)
 
+        # for i in range(6):
+        #     self.cmd_vel.publish(turn)
+        #     self.rate.sleep
+        rospy.sleep(10)
+        
         # set the ARTag that has been visited to indicate this 
         curr_tag = my_dict.get(my_key)
         curr_tag[2] = 'visited'

@@ -182,6 +182,11 @@ class Main:
                       
             elif (self.state == 'handle_AR'):
                 move_cmd = self.mover.handle_AR()
+                for i in range(6):
+                    self.cmd_vel.publish(move_cmd)
+                    self.rate.sleep
+                # pause for 10 seconds
+                rospy.sleep(10)
                 self.prev_state = 'handle_AR'
                 self.state = 'wander'
 
