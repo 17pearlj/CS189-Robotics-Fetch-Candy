@@ -107,7 +107,7 @@ class MoveMaker:
     def handle_AR(self,my_dict, my_key):
         print "handle AR"
         self.move_cmd.linear.x = 0
-        self.move_cmd.angular.z = 0
+        self.move_cmd.angular.z = math.radians(180)
 
         # set the ARTag that has been visited to indicate this 
         curr_tag = my_dict.get(my_key)

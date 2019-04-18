@@ -45,7 +45,8 @@ class Main:
 
         # booleans that let robot know when and where to map
         self.obstacle_seen = False
-        self.obstacle_depth = -1
+        self.obstacle_depth = [-1, -1] # depth, segment (segment for map fun)
+        self.mapper.obstacle_depth = self.obstacle_depth
         self.AR_seen = False
 
         # booleans that help the robot avoid obstacles and react to bumps 
@@ -137,7 +138,7 @@ class Main:
                 move_cmd = self.mover.wander()
             
                 # current location will always be free :)
-                #self.mapper.updateMapFree()
+                #self.mapper.updateMapFree(self.position)
                 
                 # # this info will come from depth senor processing
                 # if (self.obstacle_seen == True):
@@ -276,6 +277,11 @@ class Main:
         :return: Image with bounding box 
         """
         img = np.copy(img_in)
+        img = img[:-200]
+        middle_seg = False
+        img_height, img_width = img.shape[:2] # (480, 640) 
+        NUM_SEGMENTS = 5 #segmenting robot vision by 5 (could be changed to 3 if lag/ not accurate)
+
 
         # Get contours
         contours, _ = cv2.findContours(img, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
@@ -285,26 +291,29 @@ class Main:
             max_index = np.argmax(areas)
             max_contour = contours[max_index]
             new_obstacle_pos = cm.centroid(max_contour)
-
+            obs_segment = math.floor(new_obstacle_pos[1]/128)
             # returns obstacle depth that will allow obstacle to be mapped 
             if new_obstacle_pos:
-                self.obstacle_depth =  self.depth_image[new_obstacle_pos[0]][new_obstacle_pos[1]] 
+                self.obstacle_depth =  [(self.depth_image[new_obstacle_pos[0]][new_obstacle_pos[1]]/0.2),
+                                        obs_segment]
 
             # show where largest obstacle is 
             cv2.drawContours(img, max_contour, -1, color=(0, 255, 0), thickness=3)
        
             # Draw rectangle bounding box on image
             x, y, w, h = cv2.boundingRect(max_contour)
-
+   
             # only want to map obstacle if it is large enough 
-            if (w*h > 200):
+            if (w*h > 200 | (w*h < 200 & obs_segment == 2)):
                 self.obstacle_seen = True
 
             # obstacle must be even larger to get the state to be switched 
-            if (w*h > 400):
+            if (w*h > 400 | (w*h > 200 & obs_segment == 2)):
                 #self.state = 'avoid_obstacle'
                 # Differentiate between left and right objects
-                if (x < 160):  
+                if (obs_segment == 2):
+                    self.obstacle_side = 'center'
+                elif (obs_segment < 2):  
                     self.obstacle_side = 'left'
                 else:
                     self.obstacle_side = 'right'         
@@ -325,9 +334,6 @@ class Main:
             mask = cv2.inRange(cv_image, 0.1, 1)
             
             # create a mask to restrict the depth that can be seen 
-            mask[400:, :] = 0
-            mask[:, 0:200] = 0
-            mask[:, 440:] = 0
             im_mask = cv2.bitwise_and(cv_image, cv_image, mask=mask)
             self.depth_image = im_mask
 
