@@ -182,18 +182,35 @@ class Main:
                       
             elif (self.state == 'handle_AR'):
                 print "handle that"
+                orient_more = None
+                back_out = None
 
-                self.handle_AR_step = self.handle_AR_step + 1
-                print "SSS %d" % self.handle_AR_step
-                move_cmd = self.mover.handle_AR(self.AR_q, self.AR_curr, self.handle_AR_step)
-                # pause for 10 seconds
-                
-                if (self.handle_AR_step == 5):
-                    print "enter"
+                orient_more, move_cmd = self.mover.close_orient(self.AR_q, self.AR_curr, self.orientation)
+                if (orient_more is not 'not good'):
+                    move_cmd = self.mover.stop()
+                    rospy.sleep(10)
+                    orient_more = 'back_out'
+        
+                elif (orient_more == 'back_out'):
+                    move_cmd = self.mover.back_out()
                     self.obstacle_OFF = False
                     self.state = 'wander'
                     self.handle_AR_step = 0
                     self.prev_state = 'handle_AR'
+
+
+
+                # self.handle_AR_step = self.handle_AR_step + 1
+                # print "SSS %d" % self.handle_AR_step
+                # move_cmd = self.mover.handle_AR(self.AR_q, self.AR_curr, self.handle_AR_step)
+                # # pause for 10 seconds
+                
+                # if (self.handle_AR_step == 5):
+                #     print "enter"
+                #     self.obstacle_OFF = False
+                #     self.state = 'wander'
+                #     self.handle_AR_step = 0
+                #     self.prev_state = 'handle_AR'
                     
                     
 

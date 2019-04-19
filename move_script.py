@@ -125,6 +125,29 @@ class MoveMaker:
 
         return self.move_cmd, AR_close, obs_off
     
+    def close_orient(self,my_dict, my_key, my_orr):
+        curr_tag = my_dict.get(my_key)
+        tag_orr = curr_tag[1]
+        # z position of the ar_tag
+        tag_z = curr_tag[0].z
+        print("tag z %.2f" % tag_z)
+
+        if tag_z > 0.01:
+            self.move_cmd.angular.z = radians(10)
+            return 'not good', self.move_cmd
+            # set the ARTag that has been visited to indicate this 
+            curr_tag = my_dict.get(my_key)
+            curr_tag[2] = 'visited'
+        else:
+            return 'good'
+    
+    def back_out(self):
+        self.move_cmd.linear.x = -LIN_SPEED*3
+        return self.move_cmd
+            
+
+
+    
     def handle_AR(self,my_dict, my_key):
         print "step %d" % self.handle_AR_step
         curr_tag = my_dict.get(my_key)
@@ -149,7 +172,8 @@ class MoveMaker:
             print "3333"
             rospy.sleep(10)
             self.move_cmd.linear.x = -LIN_SPEED
-            self.move_cmd.angular.z = 0        
+            self.move_cmd.angular.z = 0    
+
         # set the ARTag that has been visited to indicate this 
         curr_tag = my_dict.get(my_key)
         curr_tag[2] = 'visited'
