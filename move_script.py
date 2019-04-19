@@ -21,9 +21,13 @@ class MoveMaker:
         self.move_cmd = Twist()
         self.position = [0,0]
         self.orientation = 0
+<<<<<<< HEAD
         self.AR_close = False
         self.handle_AR_step = 0
 
+=======
+        self.handle_AR_step = 0
+>>>>>>> 72cb89a0a126f0cfd064e24c4ce664457368d6ba
 
     def wander(self):
         self.move_cmd.linear.x = LIN_SPEED
@@ -31,13 +35,12 @@ class MoveMaker:
         return self.move_cmd
     
     def bumped(self):
-
         self.move_cmd.linear.x =  -LIN_SPEED
         self.move_cmd.angular.z = 0
         return self.move_cmd
     
     def avoid_obstacle(self):
-        #self.move_cmd.linear.x = -LIN_SPEED
+        self.move_cmd.linear.x = -LIN_SPEED *0.75
         self.move_cmd.angular.z = radians(45)
         return self.move_cmd
 
@@ -78,6 +81,7 @@ class MoveMaker:
 
         # lets us know when we have reached the AR
         AR_close = False
+        obs_off = False
 
         # get the orientation of robot at the time ar tag was seen 
         curr_tag = my_dict.get(my_key)
@@ -110,14 +114,18 @@ class MoveMaker:
             curr_dist = cm.dist_btwn(self.position, tag_pos)
             self.move_cmd.linear.x = min(LIN_SPEED, curr_dist * LIN_K)
             print("current distance from ar_tag %.2f" % curr_dist)
-            if (curr_dist < 0.10):
-                
+
+            # turn off obstacles when robot is close enough 
+            if (curr_dist < 0.5):
+                obs_off = True
+
+            elif (curr_dist < 0.10):
                     # Consider destination reached if within 5 cm
                     print "WE OUT HERE"
                     self.move_cmd.linear.x = 0
                     AR_close = True
 
-        return self.move_cmd, AR_close
+        return self.move_cmd, AR_close, obs_off
     
     def handle_AR(self,my_dict, my_key):
         print "handle AR"
