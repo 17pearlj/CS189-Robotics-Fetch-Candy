@@ -61,6 +61,7 @@ class Main:
         self.AR_curr = -1
         # lets it be know that an ARTAG is very close 
         self.AR_close = False
+        self.handle_AR_step = 0
 
 
         # mapping object will come from imported module 
@@ -72,6 +73,7 @@ class Main:
         self.mover = move_script.MoveMaker()
         self.mover.position = self.position
         self.mover.AR_close = self.AR_close
+        self.mover.handle_AR_step = self.handle_AR_step
 
         # # ---- rospy stuff ----
         # Initialize the node
@@ -185,14 +187,14 @@ class Main:
                     
                       
             elif (self.state == 'handle_AR'):
+                self.handle_AR_step += 1
                 move_cmd = self.mover.handle_AR()
-                for i in range(6):
-                    self.cmd_vel.publish(move_cmd)
-                    self.rate.sleep()
                 # pause for 10 seconds
                 rospy.sleep(10)
-                self.prev_state = 'handle_AR'
-                self.state = 'wander'
+                if (self.handle_AR_step == 3):
+                    self.handle_AR_step = 0
+                    self.prev_state = 'handle_AR'
+                    self.state = 'wander'
 
 
             # publish whichever move_cmd was chosen, and cycle through again, checking conditions
