@@ -42,7 +42,7 @@ class MoveMaker:
     def choose_AR(self, my_dict):
         """
         Get the key of the closest ARTag from a dictionary ARTags that have structure (self.AR_q):
-        (key, [(pos.x,.y.z)at the time seen, robot's orientation at the time seen, 'unvisited'])
+        (key, [(pos.x,.y.z)at the time seen, robot's orientation at time seen, 'unvisited'])
         """
         unvisited = []
         for item in my_dict.items():
@@ -76,7 +76,10 @@ class MoveMaker:
         # get the orientation of robot at the time ar tag was seen 
         curr_tag = my_dict.get(my_key)
         tag_orr = curr_tag[1]
-        tag_pos = (curr_tag[0].x, curr_tag[0].z)
+        tag_pos = (curr_tag[0].x, curr_tag[0].y)
+        print "tag_orr"
+        print tag_orr
+
 
         # get the difference between this orientation and my current orientation 
         angle_diff = cm.angle_compare(tag_orr, my_orr)
@@ -84,10 +87,7 @@ class MoveMaker:
         prop_angle = abs(angle_diff) * ROT_K
         # choose angle that requires minimal turning 
         turn_angle = cm.sign(angle_diff) * min(prop_angle, ROT_SPEED)
-        print 'turn angle:'
-        print turn_angle
-        # print "sel orr in move-script"
-        # print math.degrees(my_orr)
+    
         
 
         # change turn angle to approach the ARTag
