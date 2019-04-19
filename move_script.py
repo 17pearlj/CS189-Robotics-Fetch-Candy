@@ -8,7 +8,7 @@ import cool_math as cm
 from geometry_msgs.msg import Twist
 
 # constant for speed 
-LIN_SPEED = 0.2/2  # 0.2 m/s
+LIN_SPEED = 0.2/2 # 0.2 m/s
 ROT_SPEED = math.radians(45)  # 45 deg/s in radians/s
 ROT_K = 5  # Constant for proportional angular velocity control
 LIN_K = 0.5  # Constant for proportional linear velocity control
@@ -103,40 +103,51 @@ class MoveMaker:
         self.move_cmd.linear.x = 0
 
         if (abs(angle_diff) < 0.2):
-            print "robot orientation %.2f and angle to ar_tag %.2f are the same" % (my_orr, tag_orr)
+            # print "robot orientation %.2f and angle to ar_tag %.2f are the same" % (my_orr, tag_orr)
             self.move_cmd.angular.z = 0
 
             # proportional control to approach the ARTag based on current distance
-            curr_dist = cm.dist_btwn(self.position, tag_pos)
+            curr_dist = cm.dist((curr_tag[0].x, curr_tag[0].y, curr_tag[0].z))
             self.move_cmd.linear.x = min(LIN_SPEED, curr_dist * LIN_K)
             print("current distance from ar_tag %.2f" % curr_dist)
 
             # turn off obstacles when robot is close enough 
-            if (curr_dist < 0.5):
+            if (curr_dist < 1):
                 obs_off = True
 
-                if (curr_dist < 0.25):
+                if (curr_dist < 0.5):
                         # Consider destination reached if within 5 cm
-                        print "WE OUT HERE"
+            
                         self.move_cmd.linear.x = 0
+                        self.move_cmd.angular.z = 0
                         obs_off = True
                         AR_close = True
+
 
         return self.move_cmd, AR_close, obs_off
     
     def handle_AR(self,my_dict, my_key):
+        print "step %d" % self.handle_AR_step
+        curr_tag = my_dict.get(my_key)
+        tag_orr = curr_tag[1]
         print "handle AR"
         if (self.handle_AR_step == 1):
+            print "1111"
             self.move_cmd.linear.x = 0
-            if (self.ar_side == 'right'):
+            if (tag_orr < -.5):
+                print "right side!"
                 self.move_cmd.angular.z = math.radians(-90)
-            elif (self.ar_side == 'left'):
+            elif (tag_orr > .5):
+                print "Left side"
                 self.move_cmd.angular.z = math.radians(90)
             else:
+                print "center"
                 self.move_cmd.angular.z = 0
         if (self.handle_AR_step == 2):
+            print "2222"
             self.move_cmd.linear.x = .05
         if (self.handle_AR_step == 3):
+            print "3333"
             rospy.sleep(10)
             self.move_cmd.linear.x = -LIN_SPEED
             self.move_cmd.angular.z = 0        
