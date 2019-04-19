@@ -180,8 +180,7 @@ class Main:
 
             # handle AR_tags 
             elif (self.state == 'go_to_AR'):
-                move_cmd, self.AR_close, self.obstacle_OFF = 
-                self.mover.go_to_AR(self.AR_q, self.AR_curr, self.orientation)
+                move_cmd, self.AR_close, self.obstacle_OFF = self.mover.go_to_AR(self.AR_q, self.AR_curr, self.orientation)
 
                 # only want to do the ARtag procedure when we are close enough to the AR tags 
                 if (self.AR_close == True):
