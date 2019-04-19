@@ -67,6 +67,8 @@ class MoveMaker:
             the_key = close[0][0][0]
 
             return the_key
+        else:
+            return -1
     
     def go_to_AR(self, my_dict, my_key, my_orr):
         """
