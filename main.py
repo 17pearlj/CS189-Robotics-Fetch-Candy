@@ -51,6 +51,7 @@ class Main:
 
         # booleans that help the robot avoid obstacles and react to bumps 
         self.obstacle_side = None 
+        self.obstacle_OFF = False # do we care about obstacles or not?
 
         # tag_id: [distace, orientation] key-value pairs for ARTags
         self.markers = {} # dictionary holding all ARTags currently seen
@@ -179,7 +180,8 @@ class Main:
 
             # handle AR_tags 
             elif (self.state == 'go_to_AR'):
-                move_cmd, self.AR_close = self.mover.go_to_AR(self.AR_q, self.AR_curr, self.orientation)
+                move_cmd, self.AR_close, self.obstacle_OFF = 
+                self.mover.go_to_AR(self.AR_q, self.AR_curr, self.orientation)
 
                 # only want to do the ARtag procedure when we are close enough to the AR tags 
                 if (self.AR_close == True):
@@ -322,14 +324,17 @@ class Main:
                 self.obstacle_seen = True
 
             # obstacle must be even larger to get the state to be switched 
-            if ((w*h > 400) | ((w*h > 200) and (obs_segment == 2)) and self.state is not 'handle_AR'):
-                print "big"
-                self.state = 'avoid_obstacle'
-                # Differentiate between left and right objects
-                if (obs_segment < 1):  
-                    self.obstacle_side = 'left'
+            if ((w*h > 400) | ((w*h > 200) and (obs_segment == 2))):
+                if (self.obstacle_OFF == False):
+                    print "avoiding obstacle"
+                    self.state = 'avoid_obstacle'
+                    # Differentiate between left and right objects
+                    if (obs_segment < 1):  
+                        self.obstacle_side = 'left'
+                    else:
+                        self.obstacle_side = 'right'  
                 else:
-                    self.obstacle_side = 'right'         
+                    print "obstacle seen, not being avoided"       
 
         return img
 
@@ -372,7 +377,7 @@ class Main:
         :return: None
         """
 
-        if (data.state == BumperEvent.PRESSED and self.state is not 'handle_AR'):
+        if (data.state == BumperEvent.PRESSED and self.obstacle_OFF == False):
             self.state = 'bumped'
 
     def shutdown(self):
