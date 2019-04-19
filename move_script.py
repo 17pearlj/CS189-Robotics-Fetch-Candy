@@ -115,12 +115,12 @@ class MoveMaker:
             if (curr_dist < 0.5):
                 obs_off = True
 
-            elif (curr_dist < 0.25):
-                    # Consider destination reached if within 5 cm
-                    print "WE OUT HERE"
-                    self.move_cmd.linear.x = 0
-                    obs_off = True
-                    AR_close = True
+                if (curr_dist < 0.25):
+                        # Consider destination reached if within 5 cm
+                        print "WE OUT HERE"
+                        self.move_cmd.linear.x = 0
+                        obs_off = True
+                        AR_close = True
 
         return self.move_cmd, AR_close, obs_off
     
