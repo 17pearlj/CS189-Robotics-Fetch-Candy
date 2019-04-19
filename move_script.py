@@ -22,6 +22,7 @@ class MoveMaker:
         self.position = [0,0]
         self.orientation = 0
         self.AR_close = False
+        self.handle_AR_step = 0
 
     def wander(self):
         self.move_cmd.linear.x = LIN_SPEED
@@ -115,14 +116,20 @@ class MoveMaker:
     
     def handle_AR(self,my_dict, my_key):
         print "handle AR"
-        self.move_cmd.linear.x = 0
-        self.move_cmd.angular.z = math.radians(180)
-
-        # for i in range(6):
-        #     self.cmd_vel.publish(turn)
-        #     self.rate.sleep
-        rospy.sleep(10)
-        
+        if (self.handle_AR_step == 1):
+            self.move_cmd.linear.x = 0
+            if (self.ar_side == 'right'):
+                self.move_cmd.angular.z = math.radians(-90)
+            elif (self.ar_side == 'left'):
+                self.move_cmd.angular.z = math.radians(90)
+            else:
+                self.move_cmd.angular.z = 0
+        if (self.handle_AR_step == 2):
+            self.move_cmd.linear.x = .05
+        if (self.handle_AR_step == 3):
+            rospy.sleep(10)
+            self.move_cmd.linear.x = -LIN_SPEED
+            self.move_cmd.angular.z = 0        
         # set the ARTag that has been visited to indicate this 
         curr_tag = my_dict.get(my_key)
         curr_tag[2] = 'visited'
