@@ -83,7 +83,7 @@ class MoveMaker:
         curr_tag = my_dict.get(my_key)
         tag_orr = curr_tag[1]
         tag_pos = (curr_tag[0].x, curr_tag[0].y)
-        print("tag_orr %.2f" % tag_orr) # this should stay the same
+        # print("tag_orr %.2f" % tag_orr) # this should stay the same
 
 
         # get the difference between this orientation and my current orientation 
@@ -92,8 +92,8 @@ class MoveMaker:
         prop_angle = abs(angle_diff) * ROT_K
         # choose angle that requires minimal turning 
         turn_angle = cm.sign(angle_diff) * min(prop_angle, ROT_SPEED)
-        print("angle_diff %.2f" % angle_diff) # this should change 
-        print("turn angle %.2f" % turn_angle)
+        # print("angle_diff %.2f" % angle_diff) # this should change 
+        # print("turn angle %.2f" % turn_angle)
 
 
         # change turn angle to approach the ARTag
@@ -115,10 +115,11 @@ class MoveMaker:
             if (curr_dist < 0.5):
                 obs_off = True
 
-            elif (curr_dist < 0.10):
+            elif (curr_dist < 0.25):
                     # Consider destination reached if within 5 cm
                     print "WE OUT HERE"
                     self.move_cmd.linear.x = 0
+                    obs_off = True
                     AR_close = True
 
         return self.move_cmd, AR_close, obs_off
