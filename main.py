@@ -120,22 +120,13 @@ class Main:
         - Run until Ctrl+C pressed
         :return: None
         """
-        # for testing on mac
-        # i = 0
         count = 0
-        while not rospy.is_shutdown(): #replace with rospy.spin
-           
-            
-            # print i
-            # i+=1
+
+        while not rospy.is_shutdown(): 
             # one twist object will be shared by all the states 
             move_cmd = Twist()
-            # self.print_markers()
 
-             
-            #move_cmd = None
-            # print "self orr in main, degrees"
-            # print math.degrees(self.orientation)
+            # let us know the state every once in a while
             count+=1
             if ((count % 5) == 0):
                   print self.state  
@@ -168,9 +159,8 @@ class Main:
                 self.rate.sleep()
                     
                     
-            # handle obstacles and bumps that interrupt work flow
-            # return to previous state after bumping
-            # never want prev state to be avoiding obstacles
+            # handle obstacles and bumps that interrupt work flow - high importance
+            # return to previous state after bumping/ avoiding obstacle
             if (self.state == 'avoid_obstacle' or self.state == 'bumped'):
                 if (self.state == 'bumped'):
                     move_cmd = self.mover.bumped()           
@@ -179,15 +169,13 @@ class Main:
                     move_cmd = self.mover.avoid_obstacle() 
                     self.state = self.prev_state
 
-            # handle AR_tags 
+            # zero in on an ARTag 
             elif (self.state == 'go_to_AR'):
                 move_cmd, self.AR_close, self.obstacle_OFF = self.mover.go_to_AR(self.AR_q, self.AR_curr, self.orientation)
-                # only want to do the ARtag procedure when we are close enough to the AR tags 
+                # only want to do the ARTag procedure when we are close enough to the AR tags 
                 if (self.AR_close == True):
                     self.prev_state = 'go_to_AR'
                     self.state = 'handle_AR'
-                    
-
                       
             elif (self.state == 'handle_AR'):
                 print "handle that"
@@ -206,10 +194,8 @@ class Main:
                     
                     
 
-
             # publish whichever move_cmd was chosen, and cycle through again, checking conditions
             # and publishing the chosen move_cmd until shutdown 
-
             self.cmd_vel.publish(move_cmd)
             self.rate.sleep()
 

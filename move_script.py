@@ -9,7 +9,7 @@ import cool_math as cm
 from geometry_msgs.msg import Twist
 
 # constant for speed 
-LIN_SPEED = 0.2/2 # 0.2 m/s
+LIN_SPEED = 0.2/2 # 0.1 m/s
 ROT_SPEED = math.radians(45)  # 45 deg/s in radians/s
 ROT_K = 5  # Constant for proportional angular velocity control
 LIN_K = 0.5  # Constant for proportional linear velocity control
@@ -38,7 +38,7 @@ class MoveMaker:
     
     def avoid_obstacle(self):
         self.move_cmd.linear.x = -LIN_SPEED *0.75
-        self.move_cmd.angular.z = radians(45)
+        self.move_cmd.angular.z = ROT_SPEED
         return self.move_cmd
 
     # --------- ARTags ------------------#
@@ -71,19 +71,20 @@ class MoveMaker:
     
     def go_to_AR(self, my_dict, my_key, my_orr):
         """
-        Go to the AR_tag
-        look at x and z 
+        Go to the AR_tag stored as a value in a dictionary based on a given key. Use the orientation data of
+        the robot to get to the ARTag
+        :params: dictionary, key in dictionary, orientation 
+        :return: Twist object for movement, boolean saying AR_tag is close or not, 
+        boolean saying whether or not we want to avoid obstacles
         """
-
         # lets us know when we have reached the AR
         AR_close = False
         obs_off = False
 
-        # get the orientation of robot at the time ar tag was seen 
+        # get the orientation and position of robot at the time ar tag was seen 
         curr_tag = my_dict.get(my_key)
         tag_orr = curr_tag[1]
         tag_pos = (curr_tag[0].x, curr_tag[0].y)
-        # print("tag_orr %.2f" % tag_orr) # this should stay the same
 
 
         # get the difference between this orientation and my current orientation 
@@ -92,8 +93,6 @@ class MoveMaker:
         prop_angle = abs(angle_diff) * ROT_K
         # choose angle that requires minimal turning 
         turn_angle = cm.sign(angle_diff) * min(prop_angle, ROT_SPEED)
-        # print("angle_diff %.2f" % angle_diff) # this should change 
-        # print("turn angle %.2f" % turn_angle)
 
 
         # change turn angle to approach the ARTag
