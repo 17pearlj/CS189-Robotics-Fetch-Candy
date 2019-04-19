@@ -34,7 +34,7 @@ class MoveMaker:
         return self.move_cmd
     
     def avoid_obstacle(self):
-        self.move_cmd.linear.x = -LIN_SPEED
+        #self.move_cmd.linear.x = -LIN_SPEED
         self.move_cmd.angular.z = radians(30)
         return self.move_cmd
 
