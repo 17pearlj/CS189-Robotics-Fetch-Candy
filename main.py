@@ -130,23 +130,23 @@ class Main:
             #move_cmd = None
             # print "self orr in main, degrees"
             # print math.degrees(self.orientation)
-            # if (self.state is not 'wander'):
-            #      print self.state  
+            if (self.state is not 'wander'):
+                  print self.state  
             
             while (self.state == 'wander'):
                 # just wandering around 
                 move_cmd = self.mover.wander()
             
-                # current location will always be free :)
-                self.mapper.updateMapFree(self.position)
+                # # current location will always be free :)
+                # self.mapper.updateMapFree(self.position)
                 
-                # # this info will come from depth senor processing
-                if (self.obstacle_seen == True):
-                    self.mapper.updateMapObstacle()
+                # # # this info will come from depth senor processing
+                # if (self.obstacle_seen == True):
+                #     self.mapper.updateMapObstacle()
 
-                # # map the ARTAG using info from ARTAG sensor stored in self
-                # elif (self.AR_seen == True): 
-                #     self.mapper.updateMapAR()
+                # # # map the ARTAG using info from ARTAG sensor stored in self
+                # # elif (self.AR_seen == True): 
+                # #     self.mapper.updateMapAR()
 
                 # if there are ARTags that have not yet been visited, choose one to visit 
                 if (len(self.AR_q) is not 0 and all(x[2] == 'unvisited' for x in self.AR_q.values())):
@@ -310,17 +310,15 @@ class Main:
             x, y, w, h = cv2.boundingRect(max_contour)
    
             # only want to map obstacle if it is large enough 
-            if ((w*h > 200) | ((w*h < 200) and (obs_segment == 2))):
+            if ((w*h > 400) | ((w*h > 200) and (obs_segment == 2))):
                 self.obstacle_seen = True
 
             # obstacle must be even larger to get the state to be switched 
-            if ((w*h > 400) | ((w*h > 200) and (obs_segment == 2))):
-
+            if ((w*h > 2000) | ((w*h > 1000) and (obs_segment == 2))):
+                print "big"
                 self.state = 'avoid_obstacle'
                 # Differentiate between left and right objects
-                if (obs_segment == 2):
-                    self.obstacle_side = 'center'
-                elif (obs_segment < 2):  
+                if (obs_segment < 1):  
                     self.obstacle_side = 'left'
                 else:
                     self.obstacle_side = 'right'         
@@ -338,8 +336,9 @@ class Main:
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data)
 
-            mask = cv2.inRange(cv_image, 0.1, 1)
-            
+            mask = cv2.inRange(cv_image, 0.1, .4)
+            mask[:, 0:70] = 0
+            mask[:, 570:] = 0
             # create a mask to restrict the depth that can be seen 
             im_mask = cv2.bitwise_and(cv_image, cv_image, mask=mask)
             self.depth_image = im_mask
@@ -352,8 +351,8 @@ class Main:
             cv2.normalize(norm_img, norm_img, 0, 1, cv2.NORM_MINMAX)
 
             # Displays thresholded depth image   
-            cv2.imshow('Depth Image', norm_img)    
-            cv2.waitKey(3)
+            # cv2.imshow('Depth Image', norm_img)    
+            # cv2.waitKey(3)
 
         except CvBridgeError, err:
             rospy.loginfo(err)
