@@ -1,4 +1,6 @@
 import map_util as mp
+import math
+from math import radians, degrees
 import numpy as np
 import time 
 
@@ -8,6 +10,7 @@ world_map_ratio = 0.2
 class MapMaker:
     def __init__(self):
         # initialize MapDrawer object
+        print "map initialized"
         self.mapObj = mp.MapDrawer(self.positionToMap)
 
         # create blank array of negative ones to represent blank map 
@@ -38,6 +41,7 @@ class MapMaker:
         return (step_x, step_y)
 
     def initializeMap(self):
+        print "initialized map fun called"
         # first map update, need to do twice because it doesn't show up nicely the first time .p
         self.mapObj.UpdateMapDisplay(self.my_map, (0, 0))
         self.mapObj.UpdateMapDisplay(self.my_map, (0, 0))
@@ -45,7 +49,7 @@ class MapMaker:
         # show map for this amount of time 
         time.sleep(0.001)
 
-    def updateMapFree(self, current_pos):
+    def updateMapFree(self, current_pos_map):
         """
         Takes a (x, y) as a parameter.
         Calling UpdateMapDisplay on (r, c)
@@ -63,25 +67,26 @@ class MapMaker:
             self.my_map[current_pos_map[0]-1, current_pos_map[1]-1] = 0
             self.my_map[current_pos_map[0]-1, current_pos_map[1]] = 0
             self.mapObj.UpdateMapDisplay(self.my_map, current_pos)
-            print "current map pos: %d, %d" % (current_pos_map[0], current_pos_map[1])
+            # print "current map pos: %d, %d" % (current_pos_map[0], current_pos_map[1])
             time.sleep(0.0000001)    
     
     def updateMapObstacle(self):
         #print "update map obstacle"
         # position from (r,c) to (x, y)
         (pos_x, pos_y) = self.positionToMap(self.position)
+        obstacle_pos = [-1, -1]
 
         # obstacle coordinate calculation using depth
         if (not(math.isnan(self.orientation)) and not(math.isnan(pos_x)) and not(math.isnan(pos_y))):
             time.sleep(0.0000001) 
-            self.obstacle_pos[0] = int(pos_x + abs(self.obstacle_depth[0])*np.cos(self.orientation + radians(60 - 30*obstacle_depth[1])))
-            self.obstacle_pos[1] = int(pos_y + abs(self.obstacle_depth[0])*np.sin(self.orientation + radians(60 - 30*obstacle_depth[1])))
+            obstacle_pos[0] = int(pos_x + abs(self.obstacle_depth[0])*np.cos(self.orientation + radians(60 - 30*self.obstacle_depth[1])))
+            obstacle_pos[1] = int(pos_y + abs(self.obstacle_depth[0])*np.sin(self.orientation + radians(60 - 30*self.obstacle_depth[1])))
 
             # loop through to free coordinates in front of obstacles
-            for x in range(0, int(abs(pos_x - self.obstacle_pos[0]))):
-                for y in range(0, int(abs(self.obstacle_pos[1] - pos_y))):
-                    (x1, y1) = (min(self.obstacle_pos[0], pos_x) + x, 
-                                min(self.obstacle_pos[1], pos_y) + y)
+            for x in range(0, int(abs(pos_x - obstacle_pos[0]))):
+                for y in range(0, int(abs(obstacle_pos[1] - pos_y))):
+                    (x1, y1) = (min(obstacle_pos[0], pos_x) + x, 
+                                min(obstacle_pos[1], pos_y) + y)
                     self.updateMapFree((x1, y1))
                     time.sleep(0.0000001) 
             
@@ -90,7 +95,7 @@ class MapMaker:
                 self.updateMapOccupied() 
                 rtime.sleep(0.0000001) 
             else:
-                self.updateMapFree((self.obstacle_pos[0], self.obstacle_pos[1])) 
+                self.updateMapFree((obstacle_pos[0], obstacle_pos[1])) 
                 time.sleep(0.0000001) 
          
 

@@ -46,7 +46,7 @@ class Main:
         # booleans that let robot know when and where to map
         self.obstacle_seen = False
         self.obstacle_depth = [-1, -1] # depth, segment (segment for map fun)
-        self.mapper.obstacle_depth = self.obstacle_depth
+
         self.AR_seen = False
 
         # booleans that help the robot avoid obstacles and react to bumps 
@@ -67,7 +67,7 @@ class Main:
         self.mapper = map_script.MapMaker()
         self.mapper.position = self.position
         self.mapper.orientation = self.orientation
-
+        self.mapper.obstacle_depth = self.obstacle_depth
         # moving controls will come from imported module 
         self.mover = move_script.MoveMaker()
         self.mover.position = self.position
@@ -138,11 +138,11 @@ class Main:
                 move_cmd = self.mover.wander()
             
                 # current location will always be free :)
-                #self.mapper.updateMapFree(self.position)
+                self.mapper.updateMapFree(self.position)
                 
                 # # this info will come from depth senor processing
-                # if (self.obstacle_seen == True):
-                #     self.mapper.updateMapObstacle()
+                if (self.obstacle_seen == True):
+                    self.mapper.updateMapObstacle()
 
                 # # map the ARTAG using info from ARTAG sensor stored in self
                 # elif (self.AR_seen == True): 
@@ -282,7 +282,7 @@ class Main:
         :return: Image with bounding box 
         """
         img = np.copy(img_in)
-        img = img[:-200]
+        img = img[:-250, :]
         middle_seg = False
         img_height, img_width = img.shape[:2] # (480, 640) 
         NUM_SEGMENTS = 5 #segmenting robot vision by 5 (could be changed to 3 if lag/ not accurate)
@@ -296,10 +296,11 @@ class Main:
             max_index = np.argmax(areas)
             max_contour = contours[max_index]
             new_obstacle_pos = cm.centroid(max_contour)
-            obs_segment = math.floor(new_obstacle_pos[1]/128)
+            obs_segment = int(math.floor(new_obstacle_pos[1]/128))
             # returns obstacle depth that will allow obstacle to be mapped 
             if new_obstacle_pos:
-                self.obstacle_depth =  [(self.depth_image[new_obstacle_pos[0]][new_obstacle_pos[1]]/0.2),
+                #print "obstacle!"
+                self.obstacle_depth =  [(self.depth_image[new_obstacle_pos[0]-200][new_obstacle_pos[1]]/0.2),
                                         obs_segment]
 
             # show where largest obstacle is 
@@ -309,12 +310,13 @@ class Main:
             x, y, w, h = cv2.boundingRect(max_contour)
    
             # only want to map obstacle if it is large enough 
-            if (w*h > 200 | (w*h < 200 & obs_segment == 2)):
+            if ((w*h > 200) | ((w*h < 200) and (obs_segment == 2))):
                 self.obstacle_seen = True
 
             # obstacle must be even larger to get the state to be switched 
-            if (w*h > 400 | (w*h > 200 & obs_segment == 2)):
-                #self.state = 'avoid_obstacle'
+            if ((w*h > 400) | ((w*h > 200) and (obs_segment == 2))):
+
+                self.state = 'avoid_obstacle'
                 # Differentiate between left and right objects
                 if (obs_segment == 2):
                     self.obstacle_side = 'center'
@@ -350,8 +352,8 @@ class Main:
             cv2.normalize(norm_img, norm_img, 0, 1, cv2.NORM_MINMAX)
 
             # Displays thresholded depth image   
-            # cv2.imshow('Depth Image', norm_img)    
-            # cv2.waitKey(3)
+            cv2.imshow('Depth Image', norm_img)    
+            cv2.waitKey(3)
 
         except CvBridgeError, err:
             rospy.loginfo(err)
@@ -388,7 +390,7 @@ if __name__ == '__main__':
     robot.run()
     print "success"
 
-    # uncomment for cleaner print outs!
+    # # uncomment for cleaner print outs!
     # except Exception, err:
     #     rospy.loginfo("You have an error!")
     #     print err

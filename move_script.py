@@ -2,7 +2,7 @@
 return Twist objects that are used to direct the robot
 """
 import math
-
+from math import radians, degrees
 import cool_math as cm
 # uncomment later!
 from geometry_msgs.msg import Twist
@@ -34,7 +34,7 @@ class MoveMaker:
         return self.move_cmd
     
     def avoid_obstacle(self):
-        #self.move_cmd.linear.x = -LIN_SPEED
+        self.move_cmd.linear.x = -LIN_SPEED
         self.move_cmd.angular.z = radians(30)
         return self.move_cmd
 
