@@ -21,11 +21,9 @@ class MoveMaker:
         self.move_cmd = Twist()
         self.position = [0,0]
         self.orientation = 0
-<<<<<<< HEAD
-=======
         self.AR_close = False
         self.handle_AR_step = 0
->>>>>>> b9f44e467b93969c9f2e64d59960994dad61ea49
+
 
     def wander(self):
         self.move_cmd.linear.x = LIN_SPEED
