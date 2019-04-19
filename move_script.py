@@ -21,6 +21,11 @@ class MoveMaker:
         self.move_cmd = Twist()
         self.position = [0,0]
         self.orientation = 0
+<<<<<<< HEAD
+=======
+        self.AR_close = False
+        self.handle_AR_step = 0
+>>>>>>> b9f44e467b93969c9f2e64d59960994dad61ea49
 
     def wander(self):
         self.move_cmd.linear.x = LIN_SPEED
@@ -28,13 +33,14 @@ class MoveMaker:
         return self.move_cmd
     
     def bumped(self):
-        self.move_cmd.linear.x =  - LIN_SPEED
+
+        self.move_cmd.linear.x =  -LIN_SPEED
         self.move_cmd.angular.z = 0
         return self.move_cmd
     
     def avoid_obstacle(self):
         #self.move_cmd.linear.x = -LIN_SPEED
-        self.move_cmd.angular.z = radians(30)
+        self.move_cmd.angular.z = radians(45)
         return self.move_cmd
 
     # --------- ARTags ------------------#
@@ -66,7 +72,7 @@ class MoveMaker:
 
         return the_key
     
-    def go_to_AR_orient(self, my_dict, my_key, my_orr):
+    def go_to_AR(self, my_dict, my_key, my_orr):
         """
         Go to the AR_tag
         look at x and z 
@@ -98,8 +104,8 @@ class MoveMaker:
         # don't want the robot to move while it is orienting to ARTag
         self.move_cmd.linear.x = 0
 
-        if (angle_diff < 0.05):
-            print("robot orientation %.2f and angle to ar_tag %.2f are the same", my_orr, tag_orr) 
+        if (abs(angle_diff) < 0.2):
+            print "robot orientation %.2f and angle to ar_tag %.2f are the same" % (my_orr, tag_orr)
             self.move_cmd.angular.z = 0
 
             # proportional control to approach the ARTag based on current distance
@@ -116,14 +122,20 @@ class MoveMaker:
     
     def handle_AR(self,my_dict, my_key):
         print "handle AR"
-        self.move_cmd.linear.x = 0
-        self.move_cmd.angular.z = math.radians(180)
-
-        # for i in range(6):
-        #     self.cmd_vel.publish(turn)
-        #     self.rate.sleep
-        rospy.sleep(10)
-        
+        if (self.handle_AR_step == 1):
+            self.move_cmd.linear.x = 0
+            if (self.ar_side == 'right'):
+                self.move_cmd.angular.z = math.radians(-90)
+            elif (self.ar_side == 'left'):
+                self.move_cmd.angular.z = math.radians(90)
+            else:
+                self.move_cmd.angular.z = 0
+        if (self.handle_AR_step == 2):
+            self.move_cmd.linear.x = .05
+        if (self.handle_AR_step == 3):
+            rospy.sleep(10)
+            self.move_cmd.linear.x = -LIN_SPEED
+            self.move_cmd.angular.z = 0        
         # set the ARTag that has been visited to indicate this 
         curr_tag = my_dict.get(my_key)
         curr_tag[2] = 'visited'

@@ -61,6 +61,7 @@ class Main:
         self.AR_curr = -1
         # lets it be know that an ARTAG is very close 
         self.AR_close = False
+        self.handle_AR_step = 0
 
 
         # mapping object will come from imported module 
@@ -72,6 +73,7 @@ class Main:
         self.mover = move_script.MoveMaker()
         self.mover.position = self.position
         self.mover.AR_close = self.AR_close
+        self.mover.handle_AR_step = self.handle_AR_step
 
         # # ---- rospy stuff ----
         # Initialize the node
@@ -119,6 +121,7 @@ class Main:
         """
         # for testing on mac
         # i = 0
+        count = 0
         while not rospy.is_shutdown(): #replace with rospy.spin
             
             # print i
@@ -126,11 +129,13 @@ class Main:
             # one twist object will be shared by all the states 
             move_cmd = Twist()
             # self.print_markers()
+
              
             #move_cmd = None
             # print "self orr in main, degrees"
             # print math.degrees(self.orientation)
-            if (self.state is not 'wander'):
+            count+=1
+            if ((count % 10) == 0):
                   print self.state  
             
             while (self.state == 'wander'):
@@ -182,14 +187,14 @@ class Main:
 
                       
             elif (self.state == 'handle_AR'):
+                self.handle_AR_step += 1
                 move_cmd = self.mover.handle_AR()
-                for i in range(6):
-                    self.cmd_vel.publish(move_cmd)
-                    self.rate.sleep()
                 # pause for 10 seconds
                 rospy.sleep(10)
-                self.prev_state = 'handle_AR'
-                self.state = 'wander'
+                if (self.handle_AR_step == 3):
+                    self.handle_AR_step = 0
+                    self.prev_state = 'handle_AR'
+                    self.state = 'wander'
 
 
             # publish whichever move_cmd was chosen, and cycle through again, checking conditions
@@ -311,11 +316,11 @@ class Main:
             x, y, w, h = cv2.boundingRect(max_contour)
    
             # only want to map obstacle if it is large enough 
-            if ((w*h > 400) | ((w*h > 200) and (obs_segment == 2))):
+            if ((w*h > 200) | ((w*h > 100) and (obs_segment == 2))):
                 self.obstacle_seen = True
 
             # obstacle must be even larger to get the state to be switched 
-            if ((w*h > 800) | ((w*h > 400) and (obs_segment == 2))):
+            if ((w*h > 400) | ((w*h > 200) and (obs_segment == 2))):
                 print "big"
                 self.state = 'avoid_obstacle'
                 # Differentiate between left and right objects
@@ -366,6 +371,7 @@ class Main:
         """
 
         if (data.state == BumperEvent.PRESSED):
+            
             self.state = 'bumped'
 
     def shutdown(self):

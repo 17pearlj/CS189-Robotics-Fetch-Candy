@@ -70,5 +70,5 @@ if __name__ == '__main__':
 
     # returns [(1, 1, 1), 1, 'hello']
 my_var = 18.456789
-print(" my var %.2f" % my_var)
+print("my var %.2f" % my_var)
 
