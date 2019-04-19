@@ -152,8 +152,11 @@ class Main:
                     print "CURRENT AR TAG:"
                     print self.AR_curr
                     # robot will now go to AR tag 
-                    self.prev_state = 'wander'
-                    self.state = 'go_to_AR'
+                    if self.AR_curr is not -1:
+                        self.prev_state = 'wander'
+                        self.state = 'go_to_AR'
+                    else:
+                        self.state = 'wander'
 
                 self.cmd_vel.publish(move_cmd)
                 self.rate.sleep()
@@ -194,9 +197,7 @@ class Main:
             self.cmd_vel.publish(move_cmd)
             self.rate.sleep()
 
-# ------------------ Functions telling us about the robot ---------------- #     
-
-
+# ------------------ Functions telling us about the robot and its environment ---------------- #     
     def process_ar_tags(self, data):
         """
         Process the AR tag information.
@@ -228,9 +229,7 @@ class Main:
         self.markers.update(dict.fromkeys(missing_ids, None))
         if (len (self.markers) > 0):
             self.AR_seen = True
-
-
-        
+  
     def print_markers(self):
         """
         Print a nicely-formatted presentation of all the tags ever seen

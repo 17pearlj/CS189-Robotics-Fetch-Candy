@@ -49,25 +49,24 @@ class MoveMaker:
         unvisited = []
         for item in my_dict.items():
             if (item[1][2] == 'unvisited'):
-                unvisited.append(item)
-        # for checking 
-        print unvisited 
+                unvisited.append(item) 
 
         # new list of all the distances in the list of ARTags that have not been visited 
-        close = []
-        for i in unvisited:
-            pos = (i[1][0].x , i[1][0].x)
-            curr_dist = cm.dist_btwn(pos, self.position)
-            # list of dictionary items, and their distances 
-            close.append([i, curr_dist])
+        if (len(unvisited) > 1):
+            close = []
+            for i in unvisited:
+                pos = (i[1][0].x , i[1][0].x)
+                curr_dist = cm.dist_btwn(pos, self.position)
+                # list of dictionary items, and their distances 
+                close.append([i, curr_dist])
 
-        # actually reorder from smallest to largest distance 
-        close.sort(reverse = True)
-        
-        # close is sorted smallest to large -> key into the dictionary
-        the_key = close[0][0][0]
+            # actually reorder from smallest to largest distance 
+            close.sort(reverse = True)
+            
+            # close is sorted smallest to large -> key into the dictionary
+            the_key = close[0][0][0]
 
-        return the_key
+            return the_key
     
     def go_to_AR(self, my_dict, my_key, my_orr):
         """
