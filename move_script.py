@@ -77,7 +77,7 @@ class MoveMaker:
         curr_tag = my_dict.get(my_key)
         tag_orr = curr_tag[1]
         tag_pos = (curr_tag[0].x, curr_tag[0].y)
-        print("tag_orr %.2f" % taG_orr) # this should stay the same
+        print("tag_orr %.2f" % tag_orr) # this should stay the same
 
 
         # get the difference between this orientation and my current orientation 
@@ -89,8 +89,12 @@ class MoveMaker:
         print("angle_diff %.2f" % angle_diff) # this should change 
         print("turn angle %.2f" % turn_angle)
 
+
         # change turn angle to approach the ARTag
         self.move_cmd.angular.z = turn_angle
+
+        # don't want the robot to move while it is orienting to ARTag
+        self.move_cmd.linear.x = 0
 
         if (angle_diff < 0.05):
             print("robot orientation %.2f and angle to ar_tag %.2f are the same", my_orr, tag_orr) 
@@ -99,9 +103,11 @@ class MoveMaker:
             # proportional control to approach the ARTag based on current distance
             curr_dist = cm.dist_btwn(self.position, tag_pos)
             self.move_cmd.linear.x = min(LIN_SPEED, curr_dist * LIN_K)
-            if curr_dist < 0.05:
+            print("current distance from ar_tag %.2f" % curr_dist)
+            if (curr_dist < 0.05):
                     # Consider destination reached if within 5 cm
                     print "WE OUT HERE"
+                    self.move_cmd.linear.x = 0
                     self.AR_close= True
 
         return self.move_cmd

@@ -179,6 +179,7 @@ class Main:
                 if (self.AR_close == True):
                     self.prev_state = 'go_to_AR'
                     self.state == 'handle_AR'
+                    
                       
             elif (self.state == 'handle_AR'):
                 move_cmd = self.mover.handle_AR()
@@ -314,7 +315,7 @@ class Main:
                 self.obstacle_seen = True
 
             # obstacle must be even larger to get the state to be switched 
-            if ((w*h > 2000) | ((w*h > 1000) and (obs_segment == 2))):
+            if ((w*h > 800) | ((w*h > 400) and (obs_segment == 2))):
                 print "big"
                 self.state = 'avoid_obstacle'
                 # Differentiate between left and right objects
