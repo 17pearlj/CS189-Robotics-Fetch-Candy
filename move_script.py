@@ -113,6 +113,7 @@ class MoveMaker:
             self.move_cmd.linear.x = min(LIN_SPEED, curr_dist * LIN_K)
             print("current distance from ar_tag %.2f" % curr_dist)
             if (curr_dist < 0.10):
+                
                     # Consider destination reached if within 5 cm
                     print "WE OUT HERE"
                     self.move_cmd.linear.x = 0

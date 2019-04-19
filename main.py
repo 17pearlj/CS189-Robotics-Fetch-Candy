@@ -180,8 +180,10 @@ class Main:
             # handle AR_tags 
             elif (self.state == 'go_to_AR'):
                 move_cmd, self.AR_close = self.mover.go_to_AR(self.AR_q, self.AR_curr, self.orientation)
+
                 # only want to do the ARtag procedure when we are close enough to the AR tags 
                 if (self.AR_close == True):
+                    print self.AR_close
                     self.prev_state = 'go_to_AR'
                     self.state == 'handle_AR'
 
@@ -320,7 +322,7 @@ class Main:
                 self.obstacle_seen = True
 
             # obstacle must be even larger to get the state to be switched 
-            if ((w*h > 400) | ((w*h > 200) and (obs_segment == 2))):
+            if ((w*h > 400) | ((w*h > 200) and (obs_segment == 2)) and self.state is not 'handle_AR'):
                 print "big"
                 self.state = 'avoid_obstacle'
                 # Differentiate between left and right objects
@@ -370,8 +372,7 @@ class Main:
         :return: None
         """
 
-        if (data.state == BumperEvent.PRESSED):
-            
+        if (data.state == BumperEvent.PRESSED and self.state is not 'handle_AR'):
             self.state = 'bumped'
 
     def shutdown(self):
