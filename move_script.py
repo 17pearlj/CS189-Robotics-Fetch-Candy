@@ -1,6 +1,7 @@
 """
 return Twist objects that are used to direct the robot
 """
+import rospy
 import math
 from math import radians, degrees
 import cool_math as cm
@@ -22,7 +23,7 @@ class MoveMaker:
         self.position = [0,0]
         self.orientation = 0
         self.AR_close = False
-        self.handle_AR_step = 0
+        self.handle_AR_turn = True
 
 
     def wander(self):
@@ -50,8 +51,7 @@ class MoveMaker:
         for item in my_dict.items():
             if (item[1][2] == 'unvisited'):
                 unvisited.append(item)
-        # for checking 
-        print unvisited 
+        
 
         # new list of all the distances in the list of ARTags that have not been visited 
         close = []
@@ -102,8 +102,8 @@ class MoveMaker:
         # don't want the robot to move while it is orienting to ARTag
         self.move_cmd.linear.x = 0
 
-        if (abs(angle_diff) < 0.2):
-            # print "robot orientation %.2f and angle to ar_tag %.2f are the same" % (my_orr, tag_orr)
+        if (abs(angle_diff) < 0.02):
+            print "robot orientation %.2f and angle to ar_tag %.2f are the same" % (my_orr, tag_orr)
             self.move_cmd.angular.z = 0
 
             # proportional control to approach the ARTag based on current distance
@@ -115,9 +115,8 @@ class MoveMaker:
             if (curr_dist < 1):
                 obs_off = True
 
-                if (curr_dist < 0.5):
+                if (curr_dist < 0.4):
                         # Consider destination reached if within 5 cm
-            
                         self.move_cmd.linear.x = 0
                         self.move_cmd.angular.z = 0
                         obs_off = True
@@ -126,33 +125,34 @@ class MoveMaker:
 
         return self.move_cmd, AR_close, obs_off
     
-    def handle_AR(self,my_dict, my_key):
-        print "step %d" % self.handle_AR_step
+    def handle_AR(self,my_dict, my_key, step):
+        print "step %d" % step
         curr_tag = my_dict.get(my_key)
         tag_orr = curr_tag[1]
-        print "handle AR"
-        if (self.handle_AR_step == 1):
-            print "1111"
+        
+        if (step == 1):
             self.move_cmd.linear.x = 0
-            if (tag_orr < -.5):
-                print "right side!"
+            if (tag_orr > -.25):
                 self.move_cmd.angular.z = math.radians(-90)
-            elif (tag_orr > .5):
-                print "Left side"
+            elif (tag_orr < .25):
                 self.move_cmd.angular.z = math.radians(90)
             else:
-                print "center"
+                self.handle_AR_turn = False
                 self.move_cmd.angular.z = 0
-        if (self.handle_AR_step == 2):
-            print "2222"
-            self.move_cmd.linear.x = .05
-        if (self.handle_AR_step == 3):
-            print "3333"
-            rospy.sleep(10)
-            self.move_cmd.linear.x = -LIN_SPEED
-            self.move_cmd.angular.z = 0        
+        if (step == 2):
+            self.move_cmd.linear.x = .07
+        if (step == 3):
+            if(not(self.handle_AR_turn)):
+                self.move_cmd.linear.x = 0
+            else:
+                self.move_cmd.linear.x = -LIN_SPEED*2 
+            rospy.sleep(5)
+            self.move_cmd.angular.z = 0 
+        if (step == 4):
+            self.move_cmd.linear.x = 0
+            self.move_cmd.angular.z = 180        
         # set the ARTag that has been visited to indicate this 
-        curr_tag = my_dict.get(my_key)
-        curr_tag[2] = 'visited'
+            curr_tag = my_dict.get(my_key)
+            curr_tag[2] = 'visited'
 
         return self.move_cmd

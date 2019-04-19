@@ -137,7 +137,7 @@ class Main:
             # print "self orr in main, degrees"
             # print math.degrees(self.orientation)
             count+=1
-            if ((count % 10) == 0):
+            if ((count % 5) == 0):
                   print self.state  
             
             while (self.state == 'wander'):
@@ -191,15 +191,20 @@ class Main:
                       
             elif (self.state == 'handle_AR'):
                 print "handle that"
-                print "SSS %d" % self.handle_AR_step
+
                 self.handle_AR_step = self.handle_AR_step + 1
-                move_cmd = self.mover.handle_AR(self.AR_q, self.AR_curr)
+                print "SSS %d" % self.handle_AR_step
+                move_cmd = self.mover.handle_AR(self.AR_q, self.AR_curr, self.handle_AR_step)
                 # pause for 10 seconds
-                rospy.sleep(10)
-                if (self.handle_AR_step == 3):
+                
+                if (self.handle_AR_step == 5):
+                    print "enter"
+                    self.obstacle_OFF = False
+                    self.state = 'wander'
                     self.handle_AR_step = 0
                     self.prev_state = 'handle_AR'
-                    self.state = 'wander'
+                    
+                    
 
 
             # publish whichever move_cmd was chosen, and cycle through again, checking conditions
@@ -326,7 +331,7 @@ class Main:
 
             # obstacle must be even larger to get the state to be switched 
             if ((w*h > 400) | ((w*h > 200) and (obs_segment == 2))):
-                if (self.obstacle_OFF == False):
+                if (self.obstacle_OFF == False and (self.state is not 'handle_AR')):
                     print "avoiding obstacle"
                     self.state = 'avoid_obstacle'
                     # Differentiate between left and right objects
