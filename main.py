@@ -174,12 +174,12 @@ class Main:
 
             # handle AR_tags 
             elif (self.state == 'go_to_AR'):
-                move_cmd = self.mover.go_to_AR(self.AR_q, self.AR_curr, self.orientation)
+                move_cmd, self.AR_close = self.mover.go_to_AR(self.AR_q, self.AR_curr, self.orientation)
                 # only want to do the ARtag procedure when we are close enough to the AR tags 
                 if (self.AR_close == True):
                     self.prev_state = 'go_to_AR'
                     self.state == 'handle_AR'
-                    
+
                       
             elif (self.state == 'handle_AR'):
                 move_cmd = self.mover.handle_AR()
