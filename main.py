@@ -135,9 +135,7 @@ class Main:
             #       print self.state 
             #       print self.AR_q 
 
-            print("robot ar tag orientation %.2f" % degrees(self.ar_orientation))
-            print("zz %.2f" % self.ar_z)
-            print("xx %.2f" % self.ar_x)
+          
 
             theta = degrees(self.ar_orientation)
             beta = 180 - theta
@@ -145,6 +143,11 @@ class Main:
             ll_dist = 0.60
             while self.ar_x is not 0:
                 move_cmd.angular.z = 15
+                print("robot ar tag orientation %.2f" % degrees(self.ar_orientation))
+                print("zz %.2f" % self.ar_z)
+                print("----------xx %.2f" % self.ar_x)
+            
+            print "z is 0"
             move_cmd.angular.z = 0
 
 
