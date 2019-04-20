@@ -130,14 +130,17 @@ class Main:
             # let us know the state every once in a while
             count+=1
             if ((count % 5) == 0):
-                  print self.state  
+                  print self.state 
+                  print self.AR_q 
 
 
             self.state = 'twist'
 
             if (self.state == 'twist'):
                 move_cmd = self.mover.twist()
-                print self.ar_orientation
+                print("robot ar tag orientation %.4f" % self.ar_orientation)
+            
+            
 
             
             
