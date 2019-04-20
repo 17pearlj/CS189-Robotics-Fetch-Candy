@@ -64,7 +64,8 @@ class Main:
         self.AR_close = False
         self.handle_AR_step = 0
         self.ar_orientation = 0
-        self.ar_orientation2 = 0 
+        self.ar_x = 0
+        self.ar_z = 0
 
 
         # mapping object will come from imported module 
@@ -127,7 +128,6 @@ class Main:
         while not rospy.is_shutdown(): 
             # one twist object will be shared by all the states 
             move_cmd = Twist()
-            self.state = 'twist'
 
             # let us know the state every once in a while
             # count+=1
@@ -135,9 +135,14 @@ class Main:
             #       print self.state 
             #       print self.AR_q 
 
-            if (self.state == 'twist'):
-                move_cmd = self.mover.twist()
-                print("robot ar tag orientation %.2f" % degrees(self.ar_orientation))
+            print("robot ar tag orientation %.2f" % degrees(self.ar_orientation))
+            print("zz %.2f" % self.ar_z)
+            print("xx %.2f" % self.ar_x)
+
+
+
+    
+                
 
 
             # publish whichever move_cmd was chosen, and cycle through again, checking conditions
@@ -162,6 +167,8 @@ class Main:
                 # print pos
 
                 distance = cm.dist((pos.x, pos.y, pos.z))
+                self.ar_x = pos.x
+                self.ar_z = pos.z
 
                 orientation = marker.pose.pose.orientation
                 list_orientation = [orientation.x, orientation.y, orientation.z, orientation.w]
