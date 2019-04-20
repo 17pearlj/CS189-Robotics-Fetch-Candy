@@ -64,6 +64,7 @@ class Main:
         self.AR_close = False
         self.handle_AR_step = 0
         self.ar_orientation = 0
+        self.ar_orientation2 = 0 
 
 
         # mapping object will come from imported module 
@@ -129,15 +130,15 @@ class Main:
             self.state = 'twist'
 
             # let us know the state every once in a while
-            count+=1
-            if ((count % 10) == 0):
-                  print self.state 
-                  print self.AR_q 
+            # count+=1
+            # if ((count % 10) == 0):
+            #       print self.state 
+            #       print self.AR_q 
 
             if (self.state == 'twist'):
                 move_cmd = self.mover.twist()
-                if ((count % 10) == 0):
-                    print("robot ar tag orientation %.4f" % degrees(self.ar_orientation))
+                print("robot ar tag orientation %.2f" % degrees(self.ar_orientation))
+                print("OTHER robot ar tag orientatio %.2f" % degrees(self.ar_orientation2))
 
 
             # publish whichever move_cmd was chosen, and cycle through again, checking conditions
@@ -166,6 +167,10 @@ class Main:
                 orientation = marker.pose.pose.orientation
                 list_orientation = [orientation.x, orientation.y, orientation.z, orientation.w]
                 self.ar_orientation = tf.transformations.euler_from_quaternion(list_orientation)[1]
+
+                orientation2 = pos.w
+                list_orientation2 = [orientation2.x, orientation2.y, orientation2.z, orientation2.w]
+                self.ar_orientation2 = tf.transformations.euler_from_quaternion(list_orientation2)[1]
 
                 # want to keep track of the distance between robot and AR_tag, but also robot's orientation at the time 
                 # and whether or not the AR_tag has been visited 
