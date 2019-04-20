@@ -146,9 +146,13 @@ class Main:
                 print("robot ar tag orientation %.2f" % degrees(self.ar_orientation))
                 print("zz %.2f" % self.ar_z)
                 print("----------xx %.2f" % self.ar_x)
+                self.cmd_vel.publish(move_cmd)
+                self.rate.sleep()
             
-            print "z is 0"
+            print("x %.2f" % self.ar_x)
             move_cmd.angular.z = 0
+
+            self.rate.sleep()
 
 
 
@@ -159,8 +163,7 @@ class Main:
 
             # publish whichever move_cmd was chosen, and cycle through again, checking conditions
             # and publishing the chosen move_cmd until shutdown 
-            self.cmd_vel.publish(move_cmd)
-            self.rate.sleep()
+            
 
 # ------------------ Functions telling us about the robot and its environment ---------------- #     
     def process_ar_tags(self, data):
