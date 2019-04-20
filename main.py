@@ -138,7 +138,7 @@ class Main:
 
             if (self.state == 'twist'):
                 move_cmd = self.mover.twist()
-                print("robot ar tag orientation %.4f" % self.ar_orientation)
+                print("robot ar tag orientation %.4f" % degrees(self.ar_orientation))
             
             
 
