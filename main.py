@@ -138,7 +138,6 @@ class Main:
             if (self.state == 'twist'):
                 move_cmd = self.mover.twist()
                 print("robot ar tag orientation %.2f" % degrees(self.ar_orientation))
-                print("OTHER robot ar tag orientatio %.2f" % degrees(self.ar_orientation2))
 
 
             # publish whichever move_cmd was chosen, and cycle through again, checking conditions
@@ -168,9 +167,6 @@ class Main:
                 list_orientation = [orientation.x, orientation.y, orientation.z, orientation.w]
                 self.ar_orientation = tf.transformations.euler_from_quaternion(list_orientation)[1]
 
-                orientation2 = pos.w
-                list_orientation2 = [orientation2.x, orientation2.y, orientation2.z, orientation2.w]
-                self.ar_orientation2 = tf.transformations.euler_from_quaternion(list_orientation2)[1]
 
                 # want to keep track of the distance between robot and AR_tag, but also robot's orientation at the time 
                 # and whether or not the AR_tag has been visited 
