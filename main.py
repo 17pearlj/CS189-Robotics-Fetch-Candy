@@ -126,25 +126,18 @@ class Main:
         while not rospy.is_shutdown(): 
             # one twist object will be shared by all the states 
             move_cmd = Twist()
+            self.state = 'twist'
 
             # let us know the state every once in a while
             count+=1
-            if ((count % 5) == 0):
+            if ((count % 10) == 0):
                   print self.state 
                   print self.AR_q 
+                  if (self.state == 'twist'):
+                    move_cmd = self.mover.twist()
+                    print("robot ar tag orientation %.4f" % degrees(self.ar_orientation))
 
-
-            self.state = 'twist'
-
-            if (self.state == 'twist'):
-                move_cmd = self.mover.twist()
-                print("robot ar tag orientation %.4f" % degrees(self.ar_orientation))
-            
-            
-
-            
-            
-
+                    
             # publish whichever move_cmd was chosen, and cycle through again, checking conditions
             # and publishing the chosen move_cmd until shutdown 
             self.cmd_vel.publish(move_cmd)
