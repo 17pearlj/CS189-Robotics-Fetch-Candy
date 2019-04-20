@@ -145,15 +145,12 @@ class MoveMaker:
         self.move_cmd.linear.x = -LIN_SPEED*3
         return self.move_cmd
 
-    def stop(self)
+    def stop(self):
         self.move_cmd.linear.x = 0
         self.move_cmd.angular.z = 0
         return self.move_cmd
     
     def twist(self):
-    """
-    Figure out what certain angles are
-    """
         # rotate 
         self.move_cmd.anglular.z = ROT_SPEED/2
         # want to know theta w from ar_tag
