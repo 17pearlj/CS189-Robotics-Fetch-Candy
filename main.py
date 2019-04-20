@@ -139,6 +139,15 @@ class Main:
             print("zz %.2f" % self.ar_z)
             print("xx %.2f" % self.ar_x)
 
+            theta = degrees(self.ar_orientation)
+            beta = 180 - theta
+            # distance between robot and ar tag when they are parallel ie x = 0
+            ll_dist = 0.60
+            while self.ar_x is not 0:
+                move_cmd.angular.z = 15
+            move_cmd.angular.z = 0
+
+
 
 
     
