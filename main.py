@@ -63,6 +63,7 @@ class Main:
         # lets it be know that an ARTAG is very close 
         self.AR_close = False
         self.handle_AR_step = 0
+        self.ar_orientation = 0
 
 
         # mapping object will come from imported module 
@@ -130,89 +131,16 @@ class Main:
             count+=1
             if ((count % 5) == 0):
                   print self.state  
+
+
+            self.state = 'twist'
+
+            if (self.state == 'twist'):
+                move_cmd = self.mover.twist()
+                print self.ar_orientation
+
             
-            while (self.state == 'wander'):
-                # just wandering around 
-                move_cmd = self.mover.wander()
             
-                # # current location will always be free :)
-                # self.mapper.updateMapFree(self.position)
-                
-                # # # this info will come from depth senor processing
-                # if (self.obstacle_seen == True):
-                #     self.mapper.updateMapObstacle()
-
-                # # # map the ARTAG using info from ARTAG sensor stored in self
-                # # elif (self.AR_seen == True): 
-                # #     self.mapper.updateMapAR()
-
-                # if there are ARTags that have not yet been visited, choose one to visit 
-                if (len(self.AR_q) is not 0 and all(x[2] == 'unvisited' for x in self.AR_q.values())):
-                    self.AR_curr = self.mover.choose_AR(self.AR_q) 
-                    print "CURRENT AR TAG:"
-                    print self.AR_curr
-                    # robot will now go to AR tag 
-                    if self.AR_curr is not -1:
-                        self.prev_state = 'wander'
-                        self.state = 'go_to_AR'
-                    else:
-                        self.state = 'wander'
-
-                self.cmd_vel.publish(move_cmd)
-                self.rate.sleep()
-                    
-                    
-            # handle obstacles and bumps that interrupt work flow - high importance
-            # return to previous state after bumping/ avoiding obstacle
-            if (self.state == 'avoid_obstacle' or self.state == 'bumped'):
-                if (self.state == 'bumped'):
-                    move_cmd = self.mover.bumped()           
-                    self.state = self.prev_state
-                else:
-                    move_cmd = self.mover.avoid_obstacle() 
-                    self.state = self.prev_state
-
-            # zero in on an ARTag 
-            elif (self.state == 'go_to_AR'):
-                move_cmd, self.AR_close, self.obstacle_OFF = self.mover.go_to_AR(self.AR_q, self.AR_curr, self.orientation)
-                # only want to do the ARTag procedure when we are close enough to the AR tags 
-                if (self.AR_close == True):
-                    self.prev_state = 'go_to_AR'
-                    self.state = 'handle_AR'
-                      
-            elif (self.state == 'handle_AR'):
-                print "handle that"
-                orient_more = None
-                back_out = None
-
-                orient_more, move_cmd = self.mover.close_orient(self.AR_q, self.AR_curr, self.orientation)
-                if (orient_more is not 'not good'):
-                    move_cmd = self.mover.stop()
-                    rospy.sleep(10)
-                    orient_more = 'back_out'
-        
-                elif (orient_more == 'back_out'):
-                    move_cmd = self.mover.back_out()
-                    self.obstacle_OFF = False
-                    self.state = 'wander'
-                    self.handle_AR_step = 0
-                    self.prev_state = 'handle_AR'
-
-
-
-                # self.handle_AR_step = self.handle_AR_step + 1
-                # print "SSS %d" % self.handle_AR_step
-                # move_cmd = self.mover.handle_AR(self.AR_q, self.AR_curr, self.handle_AR_step)
-                # # pause for 10 seconds
-                
-                # if (self.handle_AR_step == 5):
-                #     print "enter"
-                #     self.obstacle_OFF = False
-                #     self.state = 'wander'
-                #     self.handle_AR_step = 0
-                #     self.prev_state = 'handle_AR'
-                    
-                    
 
             # publish whichever move_cmd was chosen, and cycle through again, checking conditions
             # and publishing the chosen move_cmd until shutdown 
@@ -236,6 +164,11 @@ class Main:
                 # print pos
 
                 distance = cm.dist((pos.x, pos.y, pos.z))
+
+                orientation = marker.pose.pose.orientation
+                list_orientation = [orientation.x, orientation.y, orientation.z, orientation.w]
+                self.ar_orientation = tf.transformations.euler_from_quaternion(list_orientation)[1]
+
                 # want to keep track of the distance between robot and AR_tag, but also robot's orientation at the time 
                 # and whether or not the AR_tag has been visited 
                 # going to do this in seperate dictionaries for now
@@ -290,6 +223,7 @@ class Main:
         orientation = data.pose.pose.orientation
         list_orientation = [orientation.x, orientation.y, orientation.z, orientation.w]
         self.orientation = tf.transformations.euler_from_quaternion(list_orientation)[-1]
+        # want the first element 
             
     def bound_object(self, img_in):
         """
@@ -331,18 +265,18 @@ class Main:
             if ((w*h > 200) | ((w*h > 100) and (obs_segment == 2))):
                 self.obstacle_seen = True
 
-            # obstacle must be even larger to get the state to be switched 
-            if ((w*h > 400) | ((w*h > 200) and (obs_segment == 2))):
-                if (self.obstacle_OFF == False and (self.state is not 'handle_AR')):
-                    print "avoiding obstacle"
-                    self.state = 'avoid_obstacle'
-                    # Differentiate between left and right objects
-                    if (obs_segment < 1):  
-                        self.obstacle_side = 'left'
-                    else:
-                        self.obstacle_side = 'right'  
-                else:
-                    print "obstacle seen, not being avoided"       
+            # # obstacle must be even larger to get the state to be switched - JK NOT SWITCHING RN
+            # if ((w*h > 400) | ((w*h > 200) and (obs_segment == 2))):
+            #     if (self.obstacle_OFF == False and (self.state is not 'handle_AR')):
+            #         print "avoiding obstacle"
+            #         self.state = 'avoid_obstacle'
+            #         # Differentiate between left and right objects
+            #         if (obs_segment < 1):  
+            #             self.obstacle_side = 'left'
+            #         else:
+            #             self.obstacle_side = 'right'  
+            #     else:
+            #         print "obstacle seen, not being avoided"       
 
         return img
 
