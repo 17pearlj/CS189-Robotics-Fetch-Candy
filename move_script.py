@@ -152,7 +152,7 @@ class MoveMaker:
     
     def twist(self):
         # rotate 
-        self.move_cmd.angular.z = ROT_SPEED/3
+        self.move_cmd.angular.z = radians(15)
         # want to know theta w from ar_tag
 
         return self.move_cmd
