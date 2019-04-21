@@ -139,11 +139,12 @@ class Main:
             beta = 180 - theta
             # distance between robot and ar tag when they are parallel ie x = 0
             ll_dist = 0.60
+            move_cmd.angular.z = radians(15)
             while abs(self.ar_x) > 0.04:
-                move_cmd.angular.z = degrees(15)
+                
                 count+=1
-                if ((count % 10) == 0):
-                    print("robot ar tag orientation %.2f" % degrees(self.ar_orientation))
+                if ((count % 100000) == 0):
+                    print("robot ar tag orientation %.2f" % degres(self.ar_orientation))
                     print("zz %.2f" % self.ar_z)
                     print("----------xx %.2f" % self.ar_x)
                 self.cmd_vel.publish(move_cmd)
