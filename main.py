@@ -131,9 +131,7 @@ class Main:
 
             # let us know the state every once in a while
             # count+=1
-            # if ((count % 10) == 0):
-            #       print self.state 
-            #       print self.AR_q 
+            #
 
           
 
@@ -142,10 +140,11 @@ class Main:
             # distance between robot and ar tag when they are parallel ie x = 0
             ll_dist = 0.60
             while abs(self.ar_x) > 0.04:
-                move_cmd.angular.z = degrees(15)
-                print("robot ar tag orientation %.2f" % degrees(self.ar_orientation))
-                print("zz %.2f" % self.ar_z)
-                print("----------xx %.2f" % self.ar_x)
+                move_cmd.angular.z = degrees(30)
+                if ((count % 10) == 0):
+                    print("robot ar tag orientation %.2f" % degrees(self.ar_orientation))
+                    print("zz %.2f" % self.ar_z)
+                    print("----------xx %.2f" % self.ar_x)
                 self.cmd_vel.publish(move_cmd)
                 self.rate.sleep()
             
