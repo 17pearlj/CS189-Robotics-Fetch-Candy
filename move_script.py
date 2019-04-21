@@ -143,12 +143,20 @@ class MoveMaker:
     
     def back_out(self):
         self.move_cmd.linear.x = -LIN_SPEED*3
+        self.move_cmd.angular.z = 0
+
         return self.move_cmd
 
     def stop(self):
         self.move_cmd.linear.x = 0
         self.move_cmd.angular.z = 0
         return self.move_cmd
+    
+    def go_forward(self):
+        self.move_cmd.linear.x = LIN_SPEED
+        self.move_cmd.angular.z = 0
+        return self.move_cmd
+
     
     def twist(self):
         # rotate 

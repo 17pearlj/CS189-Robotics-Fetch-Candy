@@ -1,4 +1,5 @@
 import cool_math as cm
+import math
 
 if __name__ == '__main__':
     h = [0,1,2,3,4]
@@ -69,8 +70,15 @@ if __name__ == '__main__':
     
 
     # returns [(1, 1, 1), 1, 'hello']
-my_var = 18.456789
-print("my var %.2f" % my_var)
+# my_var = 18.456789
+# print("my var %.2f" % my_var)
+
+
+# get a side given two sides and one angle
+def third_side(a, b, gamma):
+    return math.sqrt(a**2 + b**2 - (2 * a * b * math.cos(gamma)))
+
+print third_side(3, 4, math.radians(30))
 
 
 
@@ -103,75 +111,75 @@ print("my var %.2f" % my_var)
 
 # old code
 
-while (self.state == 'wander'):
-                # just wandering around 
-                move_cmd = self.mover.wander()
+# while (self.state == 'wander'):
+#                 # just wandering around 
+#                 move_cmd = self.mover.wander()
             
-                # current location will always be free :)
-                self.mapper.updateMapFree(self.position)
+#                 # current location will always be free :)
+#                 self.mapper.updateMapFree(self.position)
                 
-                # # this info will come from depth senor processing
-                if (self.obstacle_seen == True):
-                    self.mapper.updateMapObstacle()
+#                 # # this info will come from depth senor processing
+#                 if (self.obstacle_seen == True):
+#                     self.mapper.updateMapObstacle()
 
-                # # map the ARTAG using info from ARTAG sensor stored in self
-                # elif (self.AR_seen == True): 
-                #     self.mapper.updateMapAR()
+#                 # # map the ARTAG using info from ARTAG sensor stored in self
+#                 # elif (self.AR_seen == True): 
+#                 #     self.mapper.updateMapAR()
 
-                # if there are ARTags that have not yet been visited, choose one to visit 
-                if (len(self.AR_q) is not 0 and all(x[2] == 'unvisited' for x in self.AR_q.values())):
-                    self.AR_curr = self.mover.choose_AR(self.AR_q) 
-                    print "CURRENT AR TAG:"
-                    print self.AR_curr
-                    # robot will now go to AR tag 
-                    if self.AR_curr is not -1:
-                        self.prev_state = 'wander'
-                        self.state = 'go_to_AR'
-                    else:
-                        self.state = 'wander'
+#                 # if there are ARTags that have not yet been visited, choose one to visit 
+#                 if (len(self.AR_q) is not 0 and all(x[2] == 'unvisited' for x in self.AR_q.values())):
+#                     self.AR_curr = self.mover.choose_AR(self.AR_q) 
+#                     print "CURRENT AR TAG:"
+#                     print self.AR_curr
+#                     # robot will now go to AR tag 
+#                     if self.AR_curr is not -1:
+#                         self.prev_state = 'wander'
+#                         self.state = 'go_to_AR'
+#                     else:
+#                         self.state = 'wander'
 
-                self.cmd_vel.publish(move_cmd)
-                self.rate.sleep()
+#                 self.cmd_vel.publish(move_cmd)
+#                 self.rate.sleep()
                     
 
-            # zero in on an ARTag 
-            elif (self.state == 'go_to_AR'):
-                move_cmd, self.AR_close, self.obstacle_OFF = self.mover.go_to_AR(self.AR_q, self.AR_curr, self.orientation)
-                # only want to do the ARTag procedure when we are close enough to the AR tags 
-                if (self.AR_close == True):
-                    self.prev_state = 'go_to_AR'
-                    self.state = 'handle_AR'
+#             # zero in on an ARTag 
+#             elif (self.state == 'go_to_AR'):
+#                 move_cmd, self.AR_close, self.obstacle_OFF = self.mover.go_to_AR(self.AR_q, self.AR_curr, self.orientation)
+#                 # only want to do the ARTag procedure when we are close enough to the AR tags 
+#                 if (self.AR_close == True):
+#                     self.prev_state = 'go_to_AR'
+#                     self.state = 'handle_AR'
                       
-            elif (self.state == 'handle_AR'):
-                print "handle that"
-                orient_more = None
+#             elif (self.state == 'handle_AR'):
+#                 print "handle that"
+#                 orient_more = None
 
-                orient_more, move_cmd = self.mover.close_orient(self.AR_q, self.AR_curr, self.orientation)
-                if (orient_more is 'good'):
-                    move_cmd = self.mover.stop()
-                    rospy.sleep(10)
-                    orient_more = 'back_out'
+#                 orient_more, move_cmd = self.mover.close_orient(self.AR_q, self.AR_curr, self.orientation)
+#                 if (orient_more is 'good'):
+#                     move_cmd = self.mover.stop()
+#                     rospy.sleep(10)
+#                     orient_more = 'back_out'
         
-                elif (orient_more == 'back_out'):
-                    move_cmd = self.mover.back_out()
-                    self.obstacle_OFF = False
-                    self.state = 'wander'
-                    self.handle_AR_step = 0
-                    self.prev_state = 'handle_AR'
+#                 elif (orient_more == 'back_out'):
+#                     move_cmd = self.mover.back_out()
+#                     self.obstacle_OFF = False
+#                     self.state = 'wander'
+#                     self.handle_AR_step = 0
+#                     self.prev_state = 'handle_AR'
 
 
 
-                # self.handle_AR_step = self.handle_AR_step + 1
-                # print "SSS %d" % self.handle_AR_step
-                # move_cmd = self.mover.handle_AR(self.AR_q, self.AR_curr, self.handle_AR_step)
-                # # pause for 10 seconds
+#                 # self.handle_AR_step = self.handle_AR_step + 1
+#                 # print "SSS %d" % self.handle_AR_step
+#                 # move_cmd = self.mover.handle_AR(self.AR_q, self.AR_curr, self.handle_AR_step)
+#                 # # pause for 10 seconds
                 
-                # if (self.handle_AR_step == 5):
-                #     print "enter"
-                #     self.obstacle_OFF = False
-                #     self.state = 'wander'
-                #     self.handle_AR_step = 0
-                #     self.prev_state = 'handle_AR'
+#                 # if (self.handle_AR_step == 5):
+#                 #     print "enter"
+#                 #     self.obstacle_OFF = False
+#                 #     self.state = 'wander'
+#                 #     self.handle_AR_step = 0
+#                 #     self.prev_state = 'handle_AR'
                     
                     
 

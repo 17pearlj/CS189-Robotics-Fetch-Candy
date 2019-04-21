@@ -129,29 +129,76 @@ class Main:
             # one twist object will be shared by all the states 
             move_cmd = Twist()
 
-            # let us know the state every once in a while
-             
-            #
+            count+=1
+            if ((count % 100000) == 0):
+                print("robot ar tag orientation %.2f" % degres(self.ar_orientation))
+                print("zz %.2f" % self.ar_z)
+                print("xx %.2f" % self.ar_x)
 
           
-
-            theta = degrees(self.ar_orientation)
-            beta = 180 - theta
+            # all angles are calculated in radians 
+            theta = self.ar_orientation # angle between robot and ar tag from ar tag
+            beta = abs(theta - math.pi) # equivalent angle that is useful for calculations
             # distance between robot and ar tag when they are parallel ie x = 0
-            ll_dist = 0.60
+            ll_dist = 0.60 #d
             move_cmd.angular.z = radians(15)
+
+            # rotate until x is about 0 - robot is angled towards the artag
             while abs(self.ar_x) > 0.04:
-                
-                count+=1
-                if ((count % 100000) == 0):
-                    print("robot ar tag orientation %.2f" % degres(self.ar_orientation))
-                    print("zz %.2f" % self.ar_z)
-                    print("----------xx %.2f" % self.ar_x)
+                print("-----x %.2f" % self.ar_x)
+                self.cmd_vel.publish(move_cmd)
+                self.rate.sleep()
+
+            move_cmd.angular.z = 0
+            
+            # TODO : put into functions in cool_math.py 
+            # distance robot must move horiantally to be parallel with robot - perpendiclar dist
+            perp_dist = math.sqrt(ll_dist^2 + self.ar_z^2 - (2 * ll_dist * self.ar_z * math.cos(beta)))
+            # angle robot must rotate in order to move horizantally to ideal location
+            alpha = math.acos((perp_dist^2 + self.ar_z^2 - ll_dist^2)/ (2 * perp_dist * self.ar_z))
+
+
+            # move to the perfect position for parking -- right in front of the robot 
+            while beta > radians(0.04):
+                print("alpha %.2f" % degrees(alpha))
+                # move alpha degrees - will need to calulate in this while loop!
+                move_cmd.angular.z = alpha
+                self.cmd_vel.publish(move_cmd)
+                self.rate.sleep()
+
+                # move a perp dist
+                print("perp_dist %.2f" % degrees(perp_dist)) 
+                move_cmd.angular.z = 0
+                move_cmd.linear.x = perp_dist
                 self.cmd_vel.publish(move_cmd)
                 self.rate.sleep()
             
-            print("x %.2f" % self.ar_x)
-            move_cmd.angular.z = 0
+            # actually park 
+            # move forward
+            while self.ar_z > 0.04:
+                self.cmd_vel.publish(self.mover.go_forward())
+                self.rate.sleep()
+
+            # pause 
+            self.cmd_vel.publish(self.mover.stop())
+            rospy.sleep(10)
+
+            # backout 
+            self.cmd_vel.publish(self.mover.back_out())
+            rospy.sleep(10)
+
+            
+            
+
+
+
+
+            
+
+
+
+            
+            
 
             self.rate.sleep()
 
