@@ -151,15 +151,15 @@ class Main:
 
             move_cmd.angular.z = 0
             
-            # TODO : put into functions in cool_math.py 
             # distance robot must move horiantally to be parallel with robot - perpendiclar dist
-            perp_dist = math.sqrt(ll_dist^2 + self.ar_z^2 - (2 * ll_dist * self.ar_z * math.cos(beta)))
+            perp_dist = cm.third_side(ll_dist, self.ar_z, beta)
             # angle robot must rotate in order to move horizantally to ideal location
-            alpha = math.acos((perp_dist^2 + self.ar_z^2 - ll_dist^2)/ (2 * perp_dist * self.ar_z))
+            
 
 
             # move to the perfect position for parking -- right in front of the robot 
             while beta > radians(0.04):
+                alpha = cm.get_angle_ab(self.ar_z, ll_dist, perp_dist)
                 print("alpha %.2f" % degrees(alpha))
                 # move alpha degrees - will need to calulate in this while loop!
                 move_cmd.angular.z = alpha
@@ -167,6 +167,7 @@ class Main:
                 self.rate.sleep()
 
                 # move a perp dist
+                perp_dist = cm.third_side(ll_dist, self.ar_z, beta)
                 print("perp_dist %.2f" % degrees(perp_dist)) 
                 move_cmd.angular.z = 0
                 move_cmd.linear.x = perp_dist

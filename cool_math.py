@@ -99,3 +99,15 @@ def sign(val):
     elif val > 0:
         return 1
     return 0
+
+def third_side(a, b, gamma):
+    """
+    returns the third side of a triangle given two sides and one angle 
+    """
+    return math.sqrt(a**2 + b**2 - (2 * a * b * math.cos(gamma)))
+
+def get_angle_ab(a, b, c):
+    """
+    returns angle in radians that is between a and b given three sides 
+    """
+    return math.acos((a**2 + b**2 - c**2)/ (2 * a * b))
