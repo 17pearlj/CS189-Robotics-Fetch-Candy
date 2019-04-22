@@ -94,7 +94,7 @@ def sign(val):
     :param val: Number from 0 to 2*pi
     :return: 1 if val < pi (left turn), else -1 (right turn)
     """
-    if val < 0:
+    if val < 0: 
         return -1
     elif val > 0:
         return 1
@@ -110,4 +110,18 @@ def get_angle_ab(a, b, c):
     """
     returns angle in radians that is between a and b given three sides 
     """
-    return math.acos((a**2 + b**2 - c**2)/ (2 * a * b))
+    if (a != 0 and b != 0 ):
+        top = (a**2 + b**2) - c**2
+        if top > 0:
+            bottom = 2 * a * b
+            both = top/bottom
+            if abs(both) > 1:
+                both = 1
+                return math.acos(both)
+            else:
+                return math.acos(both)
+
+        else:
+            return -222
+    else:
+            return -222

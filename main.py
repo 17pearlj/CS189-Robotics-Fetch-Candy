@@ -129,79 +129,82 @@ class Main:
             # one twist object will be shared by all the states 
             move_cmd = Twist()
 
-            count+=1
-            if ((count % 100000) == 0):
-                print("robot ar tag orientation %.2f" % degres(self.ar_orientation))
-                print("zz %.2f" % self.ar_z)
-                print("xx %.2f" % self.ar_x)
+            self.print_markers()
+
+            print("robot ar tag orientation %.2f" % degrees(self.ar_orientation))
+            print("zz %.2f" % self.ar_z)
+            print("xx %.2f" % self.ar_x)
 
           
             # all angles are calculated in radians 
             theta = self.ar_orientation # angle between robot and ar tag from ar tag
-            beta = abs(theta - math.pi) # equivalent angle that is useful for calculations
+            beta = abs(theta - radians(180)) # equivalent angle that is useful for calculations
             # distance between robot and ar tag when they are parallel ie x = 0
             ll_dist = 0.60 #d
-            move_cmd.angular.z = radians(15)
+            # distance robot must move horiantally to be parallel with robot - perpendiclar dist
+            perp_dist = cm.third_side(ll_dist, self.ar_z, beta)
+            
 
             # rotate until x is about 0 - robot is angled towards the artag
-            while abs(self.ar_x) > 0.04:
+
+            if abs(self.ar_x) > 0.04:
+                move_cmd.angular.z = radians(15)
                 print("-----x %.2f" % self.ar_x)
                 self.cmd_vel.publish(move_cmd)
                 self.rate.sleep()
-
-            move_cmd.angular.z = 0
-            
-            # distance robot must move horiantally to be parallel with robot - perpendiclar dist
-            perp_dist = cm.third_side(ll_dist, self.ar_z, beta)
-            # angle robot must rotate in order to move horizantally to ideal location
-            
-
-
-            # move to the perfect position for parking -- right in front of the robot 
-            while beta > radians(0.04):
-                alpha = cm.get_angle_ab(self.ar_z, ll_dist, perp_dist)
-                print("alpha %.2f" % degrees(alpha))
-                # move alpha degrees - will need to calulate in this while loop!
-                move_cmd.angular.z = alpha
-                self.cmd_vel.publish(move_cmd)
-                self.rate.sleep()
-
-                # move a perp dist
-                perp_dist = cm.third_side(ll_dist, self.ar_z, beta)
-                print("perp_dist %.2f" % degrees(perp_dist)) 
-                move_cmd.angular.z = 0
-                move_cmd.linear.x = perp_dist
-                self.cmd_vel.publish(move_cmd)
-                self.rate.sleep()
-            
-            # actually park 
-            # move forward
-            while self.ar_z > 0.04:
-                self.cmd_vel.publish(self.mover.go_forward())
-                self.rate.sleep()
-
-            # pause 
-            self.cmd_vel.publish(self.mover.stop())
-            rospy.sleep(10)
-
-            # backout 
-            self.cmd_vel.publish(self.mover.back_out())
-            rospy.sleep(10)
+            else:
+                print "x is good"
+                self.cmd_vel.publish(self.mover.stop())
+                rospy.sleep(2)
 
             
+                # angle robot must rotate in order to move horizantally to ideal location
+                print "stage 2"
+
+                # move to the perfect position for parking -- right in front of the robot 
+                if abs(beta) > radians(0.04):
+                        print("beta %.2f" % degrees(beta))
+                        alpha = cm.get_angle_ab(self.ar_z, ll_dist, perp_dist)
+                        print "alpha"
+                        print alpha
+                        # move alpha degrees - will need to calulate in this while loop!
+                        if abs(alpha) > 0.04:
+                            move_cmd.angular.z = radians(15)
+                            self.cmd_vel.publish(move_cmd)
+                            self.rate.sleep()
+                        else:
+                            print "alpha is good"
+                            self.cmd_vel.publish(self.mover.stop())
+                            rospy.sleep(2)
+
+
+            #         # move a perp dist
+            #         while perp_dist > 0.02:
+            #             perp_dist = cm.third_side(ll_dist, self.ar_z, beta)
+            #             print("perp_dist %.2f" % degrees(perp_dist)) 
+            #             move_cmd.angular.z = 0
+            #             move_cmd.linear.x = 0.2
+            #             self.cmd_vel.publish(move_cmd)
+            #             self.rate.sleep()
+            
+            # # actually park 
+            # # move forward
+            # elif self.ar_z > 0.04:
+            #     print "move z"
+            #     self.cmd_vel.publish(self.mover.go_forward())
+            #     self.rate.sleep()
+
+            # # pause 
+            # self.cmd_vel.publish(self.mover.stop())
+            # rospy.sleep(10)
+
+            # # backout 
+            # self.cmd_vel.publish(self.mover.back_out())
+            # rospy.sleep(10)
+
+
             
 
-
-
-
-            
-
-
-
-            
-            
-
-            self.rate.sleep()
 
 
 
@@ -406,7 +409,7 @@ class Main:
         # a default Twist has linear.x of 0 and angular.z of 0.  So it'll stop TurtleBot
         self.cmd_vel.publish(Twist())
         # sleep just makes sure TurtleBot receives the stop command prior to shutting down the script
-        rospy.sleep(5)
+        rospy.sleep(2)
 
 if __name__ == '__main__':
     # try:
