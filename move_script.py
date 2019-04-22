@@ -9,7 +9,7 @@ from geometry_msgs.msg import Twist
 
 # constant for speed 
 LIN_SPEED = 0.2/2 # 0.1 m/s
-ROT_SPEED = math.radians(45)  # 45 deg/s in radians/s
+ROT_SPEED = math.radians(15)  # 45 deg/s in radians/s
 ROT_K = 5  # Constant for proportional angular velocity control
 LIN_K = 0.5  # Constant for proportional linear velocity control
 
@@ -23,6 +23,36 @@ class MoveMaker:
         self.orientation = 0
         self.AR_close = False
         self.handle_AR_step = 0
+
+    #--------Simple Moves ------#
+    def back_out(self):
+        self.move_cmd.linear.x = -LIN_SPEED*2
+        self.move_cmd.angular.z = 0
+
+        return self.move_cmd
+    
+    def go_forward(self):
+        self.move_cmd.linear.x = LIN_SPEED
+        self.move_cmd.angular.z = 0
+        return self.move_cmd
+
+    def stop(self):
+        self.move_cmd.linear.x = 0
+        self.move_cmd.angular.z = 0
+        return self.move_cmd
+    
+    def twist(self):
+        # rotate 
+        self.move_cmd.angular.z = radians(15)
+        self.move_cmd.linear.x = 0
+        return self.move_cmd
+    
+    def twist_angle(self, my_angle):
+        # need an angle in radians!
+        self.move_cmd.angular.z = my_angle
+        self.move_cmd.linear.x = 0
+        return self.move_cmd
+
 
 
     def wander(self):
@@ -125,48 +155,6 @@ class MoveMaker:
 
         return self.move_cmd, AR_close, obs_off
     
-    def close_orient(self,my_dict, my_key, my_orr):
-        curr_tag = my_dict.get(my_key)
-        tag_orr = curr_tag[1]
-        # z position of the ar_tag
-        tag_z = curr_tag[0].z
-        print("tag z %.2f" % tag_z)
-
-        if tag_z > 0.01:
-            self.move_cmd.angular.z = radians(10)
-            return 'not good', self.move_cmd
-            # set the ARTag that has been visited to indicate this 
-            curr_tag = my_dict.get(my_key)
-            curr_tag[2] = 'visited'
-        else:
-            return 'good'
-    
-    def back_out(self):
-        self.move_cmd.linear.x = -LIN_SPEED*3
-        self.move_cmd.angular.z = 0
-
-        return self.move_cmd
-
-    def stop(self):
-        self.move_cmd.linear.x = 0
-        self.move_cmd.angular.z = 0
-        return self.move_cmd
-    
-    def go_forward(self):
-        self.move_cmd.linear.x = LIN_SPEED
-        self.move_cmd.angular.z = 0
-        return self.move_cmd
-
-    
-    def twist(self):
-        # rotate 
-        self.move_cmd.angular.z = radians(15)
-        # want to know theta w from ar_tag
-
-        return self.move_cmd
-            
-
-
     
     def handle_AR(self,my_dict, my_key):
         print "step %d" % self.handle_AR_step

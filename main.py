@@ -37,8 +37,8 @@ class Main:
         self.orientation = 0 # CCW +, radians 
 
         # the initialized state, and prev state is 'wander'
-        self.state = 'wander'
-        self.prev_state = 'wander'
+        self.state = 'searching'
+        #self.prev_state = 'wander'
 
         # depth image for getting obstacles
         self.depth_image = []
@@ -115,8 +115,13 @@ class Main:
         # TurtleBot will stop if we don't keep telling it to move.  How often should we tell it to move? 5 Hz
         self.rate = rospy.Rate(5)
     
+    def execute_command(self, my_move):
+        move_cmd = my_move
+        self.cmd_vel.publish(move_cmd)
+        self.rate.sleep()
 
 
+    
     def run(self):
         """
         - Control the state that the robot is currently in 
@@ -124,42 +129,86 @@ class Main:
         :return: None
         """
         count = 0
+        # constant goal dist from robot, parallel distance 
+        ll_dist = 0.60
 
         while not rospy.is_shutdown(): 
-            # one twist object will be shared by all the states 
+            #  local twist object will be shared by all the states 
             move_cmd = Twist()
+            print self.state
 
-            self.print_markers()
+            #self.print_markers()
 
-            print("robot ar tag orientation %.2f" % degrees(self.ar_orientation))
-            print("zz %.2f" % self.ar_z)
-            print("xx %.2f" % self.ar_x)
+            if len(self.markers) > 0:
+                # give info 
+                print("robot ar tag orientation %.2f" % degrees(self.ar_orientation))
+                print("zz %.2f" % self.ar_z)
+                print("xx %.2f" % self.ar_x)
+                # get info from robot
+                theta = self.ar_orientation
+                beta = abs(theta - radians(180))
+                # go to next state on next loop through 
+                self.state = 'zero x'
+
+            elif self.state == 'zero x':
+                # rotate until x is about 0 - robot is angled towards the artag
+                if abs(self.ar_x) > 0.04:
+                    print("x: %.2f" % self.ar_x)
+                    self.execute_command(self.mover.twist())
+                else:
+                    self.state = 'turn to perp'
+            
+            elif self.state == 'turn to perp':  
+                # set values to triangulate
+                perp_dist = cm.third_side(self.ar_z, ll_dist, beta) 
+                print("perp_dist: %.2f" % perp_dist)
+                alpha = cm.get_angle_ab(self.ar_z, ll_dist, perp_dist)
+                print("alpha: %.2f" % alpha)
+                # rotate until facting perpendicular to robot
+                self.execute_command(self.mover.twist_angle(alpha))
+                # move to next state when this has happened -- no check?
+                self.state = 'move perp'
+            
+            elif self.state == 'move perp':
+                perp_dist = cm.third_side(self.ar_z, ll_dist, beta) 
+                if perp_dist > 0.04:
+                    self.execute_command(self.mover.go_forward())
+                else:
+                    self.state = 'parking'
+            
+            elif self.state == 'parking':
+                # turn to face robot 
+                self.execute_command(self.mover.twist_angle(radians(90)))
+                # move to the ar tag 
+                if self.ar_z > 0.04:
+                    self.execute_command(self.mover.go_forward())
+                # wait to recieve package 
+                self.execute_command(self.mover.stop())
+                rospy.sleep(10)
+                # backout 
+                self.execute_command(self.mover.back_out())
+
+
+
+                
+
+
+                
+
+
 
           
-            # all angles are calculated in radians 
-            theta = self.ar_orientation # angle between robot and ar tag from ar tag
-            beta = abs(theta - radians(180)) # equivalent angle that is useful for calculations
-            # distance between robot and ar tag when they are parallel ie x = 0
-            ll_dist = 0.60 #d
-            # distance robot must move horiantally to be parallel with robot - perpendiclar dist
-            perp_dist = cm.third_side(ll_dist, self.ar_z, beta)
+
+            # check that beta!
             
-
-            # rotate until x is about 0 - robot is angled towards the artag
-
-            if abs(self.ar_x) > 0.04:
-                move_cmd.angular.z = radians(15)
-                print("-----x %.2f" % self.ar_x)
-                self.cmd_vel.publish(move_cmd)
-                self.rate.sleep()
-            else:
-                print "x is good"
-                self.cmd_vel.publish(self.mover.stop())
-                rospy.sleep(2)
+                
+                # self.cmd_vel.publish(move_cmd)
+                # self.rate.sleep()
+    
 
             
                 # angle robot must rotate in order to move horizantally to ideal location
-                print "stage 2"
+       
 
                 # move to the perfect position for parking -- right in front of the robot 
                 if abs(beta) > radians(0.04):
