@@ -181,6 +181,9 @@ class Main:
                     self.state = 'turn_to_perp'
             
             elif self.state is 'turn_to_perp':
+                past_orientation = self.orientation 
+                past_orr = []
+                past_orr.append(self.orientation)
                 #print self.state  
                 # set values to triangulate
                 print "helllooooo!"
@@ -195,7 +198,11 @@ class Main:
                 print ("self.orientation: %.2f" % degrees(self.orientation))
 
                 # rotate until facting perpendicular to robot
-                if self.orientation < self.orientation + alpha:
+                if self.orientation < past_orr[0] + alpha:
+                    my_goal = self.orientation + alpha
+                    print my_goal
+
+                    print past_orr[0]
                     print self.orientation
                     print self.orientation + alpha
                     self.execute_command(self.mover.twist_angle(self.orientation, self.orientation + alpha))
