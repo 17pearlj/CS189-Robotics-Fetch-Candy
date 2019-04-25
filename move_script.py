@@ -41,15 +41,21 @@ class MoveMaker:
         self.move_cmd.angular.z = 0
         return self.move_cmd
     
-    def twist(self):
-        # rotate 
-        self.move_cmd.angular.z = radians(15)
+    def twist(self, my_angle):
+
+        self.move_cmd.angular.z = my_angle
         self.move_cmd.linear.x = 0
         return self.move_cmd
     
-    def twist_angle(self, my_angle):
+    def twist_angle(self, my_angle, my_goal):
+        # get the difference between this orientation and my current orientation 
+        angle_diff = cm.angle_compare(my_angle, my_goal)
         # need an angle in radians!
-        self.move_cmd.angular.z = my_angle
+        prop_angle = abs(angle_diff) * ROT_K
+        # choose angle that requires minimal turning 
+        turn_angle = cm.sign(my_angle) * min(prop_angle, ROT_SPEED)
+
+        self.move_cmd.angular.z = turn_angle
         self.move_cmd.linear.x = 0
         return self.move_cmd
 

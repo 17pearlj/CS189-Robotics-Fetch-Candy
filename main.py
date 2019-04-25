@@ -130,141 +130,100 @@ class Main:
         """
         count = 0
         # constant goal dist from robot, parallel distance 
-        ll_dist = 0.60
+        ll_dist = 0.70
 
         while not rospy.is_shutdown(): 
             #  local twist object will be shared by all the states 
             move_cmd = Twist()
-            print self.state
+            
+
+            # move_cmd.linear.x = 0.2
+            # self.cmd_vel.publish(move_cmd)
+            # self.rate.sleep()
+            #self.execute_command(self.mover.go_forward())
+            
+            #print self.state
 
             #self.print_markers()
+            if len(self.markers) < 0:
+                print "no artags"
 
-            if len(self.markers) > 0:
+
+            elif self.state is 'searching' and len(self.markers) > 0:
                 # give info 
-                print("robot ar tag orientation %.2f" % degrees(self.ar_orientation))
-                print("zz %.2f" % self.ar_z)
-                print("xx %.2f" % self.ar_x)
+                #print("robot ar tag orientation %.2f" % degrees(self.ar_orientation))
+                #print("zz %.2f" % self.ar_z)
+                # print("xx %.2f" % self.ar_x)
                 # get info from robot
                 theta = self.ar_orientation
-                beta = abs(theta - radians(180))
+                beta = radians(180) - abs(theta)
                 # go to next state on next loop through 
-                self.state = 'zero x'
+                self.state = 'zerox'
+                
 
-            elif self.state == 'zero x':
+            #print "state outside " + self.state
+            #self.execute_command(self.mover.twist())
+
+            if self.state is 'zerox':
+                #self.execute_command(self.mover.go_forward())
                 # rotate until x is about 0 - robot is angled towards the artag
-                if abs(self.ar_x) > 0.04:
+                #print self.ar_x
+                
+                if abs(self.ar_x) > 0.03:
                     print("x: %.2f" % self.ar_x)
-                    self.execute_command(self.mover.twist())
+                    # need to change so it twists in the shortest way - proportional control
+                    if self.ar_x > 0:
+                        self.execute_command(self.mover.twist(-radians(30)))
+                    elif self.ar_x < 0:
+                        self.execute_command(self.mover.twist(radians(30)))
                 else:
-                    self.state = 'turn to perp'
+                    print " zeroed x"
+                    self.state = 'turn_to_perp'
             
-            elif self.state == 'turn to perp':  
+            elif self.state is 'turn_to_perp':
+                #print self.state  
                 # set values to triangulate
+                print "helllooooo!"
+                print("beta: %.2f" % degrees(beta))
+                print("beta real")
+                print degrees(beta - radians(180) )
                 perp_dist = cm.third_side(self.ar_z, ll_dist, beta) 
                 print("perp_dist: %.2f" % perp_dist)
-                alpha = cm.get_angle_ab(self.ar_z, ll_dist, perp_dist)
-                print("alpha: %.2f" % alpha)
+                print("self.ar_z: %.2f" % self.ar_z)
+                alpha = cm.get_angle_ab(self.ar_z, perp_dist, ll_dist)
+                print("alpha: %.2f" % degrees(alpha))
+                print ("self.orientation: %.2f" % degrees(self.orientation))
+
                 # rotate until facting perpendicular to robot
-                self.execute_command(self.mover.twist_angle(alpha))
-                # move to next state when this has happened -- no check?
-                self.state = 'move perp'
-            
-            elif self.state == 'move perp':
-                perp_dist = cm.third_side(self.ar_z, ll_dist, beta) 
-                if perp_dist > 0.04:
-                    self.execute_command(self.mover.go_forward())
+                if self.orientation < self.orientation + alpha:
+                    print self.orientation
+                    print self.orientation + alpha
+                    self.execute_command(self.mover.twist_angle(self.orientation, self.orientation + alpha))
                 else:
-                    self.state = 'parking'
+                    # move to next state when this has happened -- no check?
+                    self.state = 'move perp'
             
-            elif self.state == 'parking':
-                # turn to face robot 
-                self.execute_command(self.mover.twist_angle(radians(90)))
-                # move to the ar tag 
-                if self.ar_z > 0.04:
-                    self.execute_command(self.mover.go_forward())
-                # wait to recieve package 
-                self.execute_command(self.mover.stop())
-                rospy.sleep(10)
-                # backout 
-                self.execute_command(self.mover.back_out())
-
-
-
-                
-
-
-                
-
-
-
-          
-
-            # check that beta!
+            # elif self.state == 'move perp':
+            #     perp_dist = cm.third_side(self.ar_z, ll_dist, beta) 
+            #     print("perp_dist: %.2f" % perp_dist)
+            #     if perp_dist > 0.04:
+            #         self.execute_command(self.mover.go_forward())
+            #     else:
+            #         self.state = 'parking'
             
-                
-                # self.cmd_vel.publish(move_cmd)
-                # self.rate.sleep()
-    
+            # elif self.state == 'parking':
+            #     # turn to face robot 
+            #     self.execute_command(self.mover.twist_angle(radians(90)))
+            #     # move to the ar tag 
+            #     if self.ar_z > 0.04:
+            #         self.execute_command(self.mover.go_forward())
+            #     # wait to recieve package 
+            #     self.execute_command(self.mover.stop())
+            #     rospy.sleep(10)
+            #     # backout 
+            #     self.execute_command(self.mover.back_out())
 
-            
-                # angle robot must rotate in order to move horizantally to ideal location
-       
-
-                # move to the perfect position for parking -- right in front of the robot 
-                if abs(beta) > radians(0.04):
-                        print("beta %.2f" % degrees(beta))
-                        alpha = cm.get_angle_ab(self.ar_z, ll_dist, perp_dist)
-                        print "alpha"
-                        print alpha
-                        # move alpha degrees - will need to calulate in this while loop!
-                        if abs(alpha) > 0.04:
-                            move_cmd.angular.z = radians(15)
-                            self.cmd_vel.publish(move_cmd)
-                            self.rate.sleep()
-                        else:
-                            print "alpha is good"
-                            self.cmd_vel.publish(self.mover.stop())
-                            rospy.sleep(2)
-
-
-            #         # move a perp dist
-            #         while perp_dist > 0.02:
-            #             perp_dist = cm.third_side(ll_dist, self.ar_z, beta)
-            #             print("perp_dist %.2f" % degrees(perp_dist)) 
-            #             move_cmd.angular.z = 0
-            #             move_cmd.linear.x = 0.2
-            #             self.cmd_vel.publish(move_cmd)
-            #             self.rate.sleep()
-            
-            # # actually park 
-            # # move forward
-            # elif self.ar_z > 0.04:
-            #     print "move z"
-            #     self.cmd_vel.publish(self.mover.go_forward())
-            #     self.rate.sleep()
-
-            # # pause 
-            # self.cmd_vel.publish(self.mover.stop())
-            # rospy.sleep(10)
-
-            # # backout 
-            # self.cmd_vel.publish(self.mover.back_out())
-            # rospy.sleep(10)
-
-
-            
-
-
-
-
-
-    
-                
-
-
-            # publish whichever move_cmd was chosen, and cycle through again, checking conditions
-            # and publishing the chosen move_cmd until shutdown 
-            
+           # self.rate.sleep()
 
 # ------------------ Functions telling us about the robot and its environment ---------------- #     
     def process_ar_tags(self, data):

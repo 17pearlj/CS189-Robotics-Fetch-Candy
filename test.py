@@ -91,6 +91,28 @@ print third_side(3, 4, math.radians(30))
 print math.degrees(get_angle_ab(3,4,5))
 
 
+def get_angle_ab(a, b, c):
+    """
+    returns angle in radians that is between a and b given three sides 
+    """
+    if (a != 0 and b != 0 ):
+        top = (a**2 + b**2) - c**2
+        if top > 0:
+            bottom = 2 * a * b
+            both = top/bottom
+            if abs(both) > 1:
+                both = 1
+                return math.acos(both)
+            else:
+                return math.acos(both)
+
+        else:
+            return -222
+    else:
+            return -222
+
+
+
 
 
 
