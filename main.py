@@ -131,6 +131,8 @@ class Main:
         count = 0
         # constant goal dist from robot, parallel distance 
         ll_dist = 0.70
+        past_orr = []
+        past_orr1 = []
 
         while not rospy.is_shutdown(): 
             #  local twist object will be shared by all the states 
@@ -181,54 +183,63 @@ class Main:
                     self.state = 'turn_to_perp'
             
             elif self.state is 'turn_to_perp':
-                past_orientation = self.orientation 
-                past_orr = []
+                
                 past_orr.append(self.orientation)
-                #print self.state  
+                print("past orr = %.2f" % degrees(past_orr[0]))
                 # set values to triangulate
-                print "helllooooo!"
-                print("beta: %.2f" % degrees(beta))
-                print("beta real")
-                print degrees(beta - radians(180) )
+                # print("beta: %.2f" % degrees(beta))
+                # print("beta real")
+                # print degrees(beta - radians(180) )
                 perp_dist = cm.third_side(self.ar_z, ll_dist, beta) 
-                print("perp_dist: %.2f" % perp_dist)
-                print("self.ar_z: %.2f" % self.ar_z)
+                # print("perp_dist: %.2f" % perp_dist)
+                # print("self.ar_z: %.2f" % self.ar_z)
                 alpha = cm.get_angle_ab(self.ar_z, perp_dist, ll_dist)
+                alphar = radians(90) - alpha
                 print("alpha: %.2f" % degrees(alpha))
-                print ("self.orientation: %.2f" % degrees(self.orientation))
+
+                print "orientation now:"
+                print degrees(self.orientation)
+                dif =  self.orientation - past_orr[0]
+                print("dif: %.2f" % degrees(dif))
 
                 # rotate until facting perpendicular to robot
-                if self.orientation < past_orr[0] + alpha:
-                    my_goal = self.orientation + alpha
-                    print my_goal
-
-                    print past_orr[0]
-                    print self.orientation
-                    print self.orientation + alpha
-                    self.execute_command(self.mover.twist_angle(self.orientation, self.orientation + alpha))
+                if abs(dif) < (alpha):
+                    print("dif: %.2f" % degrees(dif))
+                    self.execute_command(self.mover.twist(radians(8)))
+                    #self.execute_command(self.mover.twist_angle(self.orientation, my_goal))
                 else:
                     # move to next state when this has happened -- no check?
+                    print "moving perp"
+                    self.execute_command(self.mover.stop())
                     self.state = 'move perp'
             
-            # elif self.state == 'move perp':
-            #     perp_dist = cm.third_side(self.ar_z, ll_dist, beta) 
-            #     print("perp_dist: %.2f" % perp_dist)
-            #     if perp_dist > 0.04:
-            #         self.execute_command(self.mover.go_forward())
-            #     else:
-            #         self.state = 'parking'
+            elif self.state == 'move perp':
+                perp_dist = cm.third_side(self.ar_z, ll_dist, beta) 
+                print("perp_dist: %.2f" % perp_dist)
+                if perp_dist > 1.9:
+                    self.execute_command(self.mover.go_forward())
+                else:
+                    print "parking"
+                    self.state = 'parking'
             
-            # elif self.state == 'parking':
-            #     # turn to face robot 
-            #     self.execute_command(self.mover.twist_angle(radians(90)))
-            #     # move to the ar tag 
-            #     if self.ar_z > 0.04:
-            #         self.execute_command(self.mover.go_forward())
-            #     # wait to recieve package 
-            #     self.execute_command(self.mover.stop())
-            #     rospy.sleep(10)
-            #     # backout 
-            #     self.execute_command(self.mover.back_out())
+            elif self.state == 'parking':
+                past_orr1.append(self.orientation)
+                # turn to face robot 
+                dif1 = self.orientation - past_orr1[0]
+                gamma = radians(180) - abs(beta) - abs(alpha)
+                print("dif1: %.2f" % degrees(dif1))
+                if abs(dif1) < gamma:
+
+                    self.execute_command(self.mover.twist(radians(8)))
+                else 
+                # # move to the ar tag 
+                # if self.ar_z > 0.04:
+                #     self.execute_command(self.mover.go_forward())
+                # # wait to recieve package 
+                # self.execute_command(self.mover.stop())
+                # rospy.sleep(10)
+                # # backout 
+                # self.execute_command(self.mover.back_out())
 
            # self.rate.sleep()
 
