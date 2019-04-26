@@ -27,6 +27,7 @@ import cool_math as cm
 
 # valid ids for AR Tags
 VALID_IDS = range(18)
+SMALL_ANGLE  = radians(8)
 
 
 
@@ -131,92 +132,60 @@ class Main:
         count = 0
         # constant goal dist from robot, parallel distance 
         ll_dist = 0.70
+        # arrays to save the orientation at a certain distance 
         past_orr = []
         past_orr1 = []
 
         while not rospy.is_shutdown(): 
             #  local twist object will be shared by all the states 
             move_cmd = Twist()
-            
 
-            # move_cmd.linear.x = 0.2
-            # self.cmd_vel.publish(move_cmd)
-            # self.rate.sleep()
-            #self.execute_command(self.mover.go_forward())
-            
-            #print self.state
-
-            #self.print_markers()
-            if len(self.markers) < 0:
-                print "no artags"
+            # orientation of ar_tag wrt robot
+            theta = self.ar_orientation
+            beta = radians(180) - abs(theta)
 
 
-            elif self.state is 'searching' and len(self.markers) > 0:
-                # give info 
-                #print("robot ar tag orientation %.2f" % degrees(self.ar_orientation))
-                #print("zz %.2f" % self.ar_z)
-                # print("xx %.2f" % self.ar_x)
-                # get info from robot
-                theta = self.ar_orientation
-                beta = radians(180) - abs(theta)
+            if self.state is 'searching' and len(self.markers) > 0:
                 # go to next state on next loop through 
                 self.state = 'zerox'
-                
-
-            #print "state outside " + self.state
-            #self.execute_command(self.mover.twist())
 
             if self.state is 'zerox':
-                #self.execute_command(self.mover.go_forward())
-                # rotate until x is about 0 - robot is angled towards the artag
-                #print self.ar_x
-                
                 if abs(self.ar_x) > 0.03:
                     print("x: %.2f" % self.ar_x)
-                    # need to change so it twists in the shortest way - proportional control
+                    # need to change so it twists in the shortest way - proportional control later
                     if self.ar_x > 0:
                         self.execute_command(self.mover.twist(-radians(30)))
                     elif self.ar_x < 0:
                         self.execute_command(self.mover.twist(radians(30)))
                 else:
                     print " zeroed x"
-                    self.state = 'turn_to_perp'
+                    self.state = 'turn_alpha'
             
-            elif self.state is 'turn_to_perp':
-                
-                past_orr.append(self.orientation)
-                print("past orr = %.2f" % degrees(past_orr[0]))
-                # set values to triangulate
-                # print("beta: %.2f" % degrees(beta))
-                # print("beta real")
-                # print degrees(beta - radians(180) )
+            elif self.state is 'turn_alpha':
                 perp_dist = cm.third_side(self.ar_z, ll_dist, beta) 
                 print("perp_dist: %.2f" % perp_dist)
-                # print("self.ar_z: %.2f" % self.ar_z)
                 alpha = cm.get_angle_ab(self.ar_z, perp_dist, ll_dist)
-                alphar = radians(90) - alpha
                 print("alpha: %.2f" % degrees(alpha))
 
-                print "orientation now:"
-                print degrees(self.orientation)
+                past_orr.append(self.orientation)
                 dif =  self.orientation - past_orr[0]
                 print("dif: %.2f" % degrees(dif))
 
-                # rotate until facting perpendicular to robot
-                if abs(dif) < (alpha):
+                # rotate until angled 'alpha' to robot
+                if abs(dif) < alpha:
                     print("dif: %.2f" % degrees(dif))
-                    self.execute_command(self.mover.twist(radians(8)))
-                    #self.execute_command(self.mover.twist_angle(self.orientation, my_goal))
+                    self.execute_command(self.mover.twist(SMALL_ANGLE))
                 else:
                     # move to next state when this has happened -- no check?
-                    print "moving perp"
+                    print "move alpha"
                     self.execute_command(self.mover.stop())
-                    self.state = 'move perp'
+                    self.state = 'move alpha'
             
-            elif self.state == 'move perp':
+
+            elif self.state == 'move alpha':
                 perp_dist = cm.third_side(self.ar_z, ll_dist, beta) 
                 print("perp_dist: %.2f" % perp_dist)
-                if perp_dist > 0.4:
+                if perp_dist > 0.04:
                     self.execute_command(self.mover.go_forward())
                 else:
                     print "turn_perf"
@@ -226,11 +195,11 @@ class Main:
                 past_orr1.append(self.orientation)
                 # turn to face robot 
                 dif1 = self.orientation - past_orr1[0]
-                gamma = radians(180) - abs(beta) - abs(alpha)
+                gamma = abs(beta) + abs(alpha)
                 print("dif1: %.2f" % degrees(dif1))
                 if abs(dif1) < gamma:
 
-                    self.execute_command(self.mover.twist(radians(8)))
+                    self.execute_command(self.mover.twist(SMALL_ANGLE))
                 else: 
                     print "move_perf"
                     self.state = 'move_perf'
