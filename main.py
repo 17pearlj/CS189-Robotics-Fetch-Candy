@@ -191,7 +191,7 @@ class Main:
                 # print("beta real")
                 # print degrees(beta - radians(180) )
                 perp_dist = cm.third_side(self.ar_z, ll_dist, beta) 
-                # print("perp_dist: %.2f" % perp_dist)
+                print("perp_dist: %.2f" % perp_dist)
                 # print("self.ar_z: %.2f" % self.ar_z)
                 alpha = cm.get_angle_ab(self.ar_z, perp_dist, ll_dist)
                 alphar = radians(90) - alpha
@@ -216,13 +216,13 @@ class Main:
             elif self.state == 'move perp':
                 perp_dist = cm.third_side(self.ar_z, ll_dist, beta) 
                 print("perp_dist: %.2f" % perp_dist)
-                if perp_dist > 1.9:
+                if perp_dist > 0.4:
                     self.execute_command(self.mover.go_forward())
                 else:
-                    print "parking"
-                    self.state = 'parking'
+                    print "turn_perf"
+                    self.state = 'turn_perf'
             
-            elif self.state == 'parking':
+            elif self.state == 'turn_perf':
                 past_orr1.append(self.orientation)
                 # turn to face robot 
                 dif1 = self.orientation - past_orr1[0]
@@ -231,15 +231,24 @@ class Main:
                 if abs(dif1) < gamma:
 
                     self.execute_command(self.mover.twist(radians(8)))
-                else 
-                # # move to the ar tag 
-                # if self.ar_z > 0.04:
-                #     self.execute_command(self.mover.go_forward())
-                # # wait to recieve package 
-                # self.execute_command(self.mover.stop())
-                # rospy.sleep(10)
-                # # backout 
-                # self.execute_command(self.mover.back_out())
+                else: 
+                    print "move_perf"
+                    self.state = 'move_perf'
+            
+            elif self.state == 'move_perf':
+                # move to the ar tag 
+                if self.ar_z > 0.04:
+                    self.execute_command(self.mover.go_forward())
+                else:
+                    print "park_it"
+                    self.state = "park_it"
+            
+            elif self.state == "park_it":
+                # wait to recieve package 
+                self.execute_command(self.mover.stop())
+                rospy.sleep(10)
+                # backout 
+                self.execute_command(self.mover.back_out())
 
            # self.rate.sleep()
 

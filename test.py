@@ -87,8 +87,8 @@ def get_angle_ab(a, b, c):
     """
     return math.acos((a**2 + b**2 - c**2)/ (2 * a * b))
 
-print third_side(3, 4, math.radians(30))
-print math.degrees(get_angle_ab(3,4,5))
+# print third_side(3, 4, math.radians(30))
+# print math.degrees(get_angle_ab(3,4,5))
 
 
 def get_angle_ab(a, b, c):
@@ -110,6 +110,9 @@ def get_angle_ab(a, b, c):
             return -222
     else:
             return -222
+
+
+print math.degrees(get_angle_ab(0.9, 0.31, 0.7))
 
 
 
