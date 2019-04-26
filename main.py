@@ -162,7 +162,7 @@ class Main:
                     self.state = 'turn_alpha'
             
             elif self.state is 'turn_alpha':
-                perp_dist = cm.third_side(self.ar_z, ll_dist, beta) 
+                perp_dist = cm.third_side(self.ar_z, ll_dist, theta) 
                 print("perp_dist: %.2f" % perp_dist)
                 alpha = cm.get_angle_ab(self.ar_z, perp_dist, ll_dist)
                 print("alpha: %.2f" % degrees(alpha))
@@ -183,9 +183,11 @@ class Main:
             
 
             elif self.state == 'move alpha':
-                perp_dist = cm.third_side(self.ar_z, ll_dist, beta) 
+                perp_dist = cm.third_side(self.ar_z, ll_dist, theta)
+                print("bata: %.2f" % (degrees(beta)))
+                print("thata: %.2f" % (degrees(theta)))
                 print("perp_dist: %.2f" % perp_dist)
-                if perp_dist > 0.04:
+                if perp_dist > 0.3: 
                     self.execute_command(self.mover.go_forward())
                 else:
                     print "turn_perf"
@@ -195,18 +197,21 @@ class Main:
                 past_orr1.append(self.orientation)
                 # turn to face robot 
                 dif1 = self.orientation - past_orr1[0]
-                gamma = abs(beta) + abs(alpha)
+                gamma = abs(theta) + abs(alpha)
                 print("dif1: %.2f" % degrees(dif1))
+                print("gamma: %.2f" % degrees(gamma))
                 if abs(dif1) < gamma:
 
-                    self.execute_command(self.mover.twist(SMALL_ANGLE))
+                    self.execute_command(self.mover.twist(-SMALL_ANGLE))
                 else: 
                     print "move_perf"
                     self.state = 'move_perf'
             
             elif self.state == 'move_perf':
                 # move to the ar tag 
-                if self.ar_z > 0.04:
+                print self.state
+                print self.ar_z
+                if self.ar_z > 0.4:
                     self.execute_command(self.mover.go_forward())
                 else:
                     print "park_it"
@@ -215,9 +220,25 @@ class Main:
             elif self.state == "park_it":
                 # wait to recieve package 
                 self.execute_command(self.mover.stop())
-                rospy.sleep(10)
-                # backout 
-                self.execute_command(self.mover.back_out())
+                print "slee[ing"
+                count+=1
+                print count
+                rospy.sleep(1)
+                if count > 10:
+                    print "back out"
+                    self.state = "back out"
+            elif self.state == "back out":
+
+                    # backout 
+                    self.execute_command(self.mover.back_out())
+                    print self.ar_z
+                    if self.ar_z > 0.7:
+                        self.state = 'done'
+
+            elif self.state == "done":
+                    self.execute_command(self.mover.stop())
+
+
 
            # self.rate.sleep()
 
