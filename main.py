@@ -64,10 +64,9 @@ class Main:
         # lets it be know that an ARTAG is very close 
         self.AR_close = False
         self.handle_AR_step = 0
-        self.ar_orientation = 0
-        self.ar_x = 0
-        self.ar_z = 0
-
+        self.ar_orientation = None
+        self.ar_x = None
+        self.ar_z = None
 
         # mapping object will come from imported module 
         self.mapper = map_script.MapMaker()
@@ -131,88 +130,99 @@ class Main:
         """
         count = 0
         # constant goal dist from robot, parallel distance 
-        ll_dist = 0.70
+        ll_dist = 0.5 #m
         # arrays to save the orientation at a certain distance 
         past_orr = []
         past_orr1 = []
 
         while not rospy.is_shutdown(): 
             #  local twist object will be shared by all the states 
-            move_cmd = Twist()
+            #rint degrees(self.ar_orientation)
+            # move_cmd = Twist()
 
-            # orientation of ar_tag wrt robot
-            theta = self.ar_orientation
-            beta = radians(180) - abs(theta)
+            
+            K_rot = 0.05
+            xK_rot = 2
+            xAcc = 0.05
 
 
             if self.state is 'searching' and len(self.markers) > 0:
                 # go to next state on next loop through 
+                # orientation of ar_tag wrt robot
+                theta = abs(self.ar_orientation)
+                beta = abs(radians(180) - theta)
                 self.state = 'zerox'
 
             if self.state is 'zerox':
-                if abs(self.ar_x) > 0.03:
+                if abs(self.ar_x) > xAcc:
                     print("x: %.2f" % self.ar_x)
                     # need to change so it twists in the shortest way - proportional control later
-                    if self.ar_x > 0:
-                        self.execute_command(self.mover.twist(-radians(30)))
-                    elif self.ar_x < 0:
-                        self.execute_command(self.mover.twist(radians(30)))
+                    # if self.ar_x > 0:)
+                    print("twist velocity:")
+                    print -1*xK_rot*self.ar_x 
+                    self.execute_command(self.mover.twist(-1*xK_rot*self.ar_x))
+                    # elif self.ar_x < 0:
+                    #     self.execute_command(self.mover.twist(-1*K_rot*self.ar_x)
                 else:
-                    print " zeroed x"
+                    print "zeroed x"
                     self.state = 'turn_alpha'
             
             elif self.state is 'turn_alpha':
-                perp_dist = cm.third_side(self.ar_z, ll_dist, theta) 
-                print("perp_dist: %.2f" % perp_dist)
-                alpha = cm.get_angle_ab(self.ar_z, perp_dist, ll_dist)
+                print "in turn_alpha"
+                print("beta: %.2f" % degrees(beta))
+                alpha_dist = cm.third_side(self.ar_z, ll_dist, beta) 
+                print("alpha_dist in turn_alpha: %.2f" % alpha_dist)
+                alpha = cm.get_angle_ab(self.ar_z, alpha_dist, ll_dist)
                 print("alpha: %.2f" % degrees(alpha))
-
-                past_orr.append(self.orientation)
-                dif =  self.orientation - past_orr[0]
-                print("dif: %.2f" % degrees(dif))
-
-                # rotate until angled 'alpha' to robot
-                if abs(dif) < alpha:
-                    print("dif: %.2f" % degrees(dif))
-                    self.execute_command(self.mover.twist(SMALL_ANGLE))
-                else:
-                    # move to next state when this has happened -- no check?
-                    print "move alpha"
-                    self.execute_command(self.mover.stop())
-                    self.state = 'move alpha'
-            
-
-            elif self.state == 'move alpha':
-                perp_dist = cm.third_side(self.ar_z, ll_dist, theta)
-                print("bata: %.2f" % (degrees(beta)))
-                print("thata: %.2f" % (degrees(theta)))
-                print("perp_dist: %.2f" % perp_dist)
-                if perp_dist > 0.3: 
-                    self.execute_command(self.mover.go_forward())
-                else:
-                    print "turn_perf"
-                    self.state = 'turn_perf'
-            
-            elif self.state == 'turn_perf':
-                past_orr1.append(self.orientation)
-                # turn to face robot 
-                dif1 = self.orientation - past_orr1[0]
-                gamma = abs(theta) + abs(alpha)
-                print("dif1: %.2f" % degrees(dif1))
-                print("gamma: %.2f" % degrees(gamma))
-                if abs(dif1) < gamma:
-
-                    self.execute_command(self.mover.twist(-SMALL_ANGLE))
+                if alpha_dist <= 0.5:
+                    print "dont need to turn - alpha_dist is very low"
+                    self.state = 'move_alpha'
+                elif alpha is -1000:
+                    print "dont need to turn alpha is none"
+                    self.state = 'move_alpha'
                 else: 
-                    print "move_perf"
-                    self.state = 'move_perf'
+                    past_orr.append(self.orientation)
+                    dif =  abs(self.orientation - past_orr[0])
+                    print("dif: %.2f" % degrees(dif))
+                    dif2go = abs(alpha - dif)
+
+                    # rotate until angled 'alpha' to robot
+                    if dif2go < radians(3):
+                        
+                        print("dif2go: %.2f" % degrees(dif2go))
+                        print("twist velocity:")
+                        print 4*K_rot*dif2go
+                        self.execute_command(self.mover.twist(4*K_rot*dif2go))
+                    else:
+                        # move to next state when this has happened -- no check?
+                        print "dont need to turn much - go to move_alpha"
+                        self.execute_command(self.mover.stop())
+                        self.state = 'move_alpha'
+            
+# 0.34
+# arz - 0.90
+            elif self.state == 'move_alpha':
+                print "innnnn move_alpha"
+                print("beta: %.2f" % degrees(beta))
+                print("self.ar_z: %.2f" % self.ar_z)
+                
+                alpha_dist = cm.third_side(self.ar_z, ll_dist, beta)
+                print("alpha_dist in move_alpha: %.2f" % alpha_dist)
+                if alpha_dist > 0.05: 
+                    self.execute_command(self.mover.go_forward_K(alpha_dist))
+                elif abs(self.ar_x) > xAcc:
+                    print "back to zeroing x "
+                    self.state = 'zerox'
+                else: 
+                    print "moving forward to artag"
+                    self.state = "move_perf"
             
             elif self.state == 'move_perf':
                 # move to the ar tag 
                 print self.state
-                print self.ar_z
-                if self.ar_z > 0.4:
-                    self.execute_command(self.mover.go_forward())
+                print("self.ar_z: %.2f" % self.ar_z)
+                if self.ar_z > 0.25:
+                    self.execute_command(self.mover.go_forward_K(self.ar_z))
                 else:
                     print "park_it"
                     self.state = "park_it"
@@ -227,8 +237,8 @@ class Main:
                 if count > 10:
                     print "back out"
                     self.state = "back out"
-            elif self.state == "back out":
 
+            elif self.state == "back out":
                     # backout 
                     self.execute_command(self.mover.back_out())
                     print self.ar_z
@@ -237,10 +247,11 @@ class Main:
 
             elif self.state == "done":
                     self.execute_command(self.mover.stop())
+                    print "done parking :)"
 
 
 
-           # self.rate.sleep()
+           #self.rate.sleep()
 
 # ------------------ Functions telling us about the robot and its environment ---------------- #     
     def process_ar_tags(self, data):
@@ -264,7 +275,7 @@ class Main:
 
                 orientation = marker.pose.pose.orientation
                 list_orientation = [orientation.x, orientation.y, orientation.z, orientation.w]
-                self.ar_orientation = tf.transformations.euler_from_quaternion(list_orientation)[1]
+                self.ar_orientation = tf.transformations.euler_from_quaternion(list_orientation)[0]
 
 
                 # want to keep track of the distance between robot and AR_tag, but also robot's orientation at the time 

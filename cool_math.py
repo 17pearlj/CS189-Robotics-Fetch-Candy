@@ -122,6 +122,6 @@ def get_angle_ab(a, b, c):
                 return math.acos(both)
 
         else:
-            return -222
+            return -1000
     else:
-            return -222
+            return -1000

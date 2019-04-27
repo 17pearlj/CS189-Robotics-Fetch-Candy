@@ -36,6 +36,11 @@ class MoveMaker:
         self.move_cmd.angular.z = 0
         return self.move_cmd
 
+    def go_forward_K(self, dist):
+        self.move_cmd.linear.x = LIN_K*dist
+        self.move_cmd.angular.z = 0
+        return self.move_cmd
+
     def stop(self):
         self.move_cmd.linear.x = 0
         self.move_cmd.angular.z = 0
