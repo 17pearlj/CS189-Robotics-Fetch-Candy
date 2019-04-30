@@ -136,7 +136,7 @@ class Main:
 
         # arrays to save the orientation at a certain instance 
         past_orr = []
-        past_orr1 = []
+        past_pos = []
 
         # constant of proportionaly for angular speed 
         K_rot = 0.05
@@ -144,6 +144,7 @@ class Main:
         xK_rot = 2
         # desired accuracy when zeroing in on ARTag 
         xAcc = 0.05
+        alpha_dist = 0
 
         while not rospy.is_shutdown(): 
             # begin when at least one AR_TAG has been found 
@@ -167,13 +168,13 @@ class Main:
             # turn away from AR_TAG by a small angle alpha
             elif self.state is 'turn_alpha':
                 print "in turn_alpha"
-                print("beta: %.2f" % degrees(beta)) # beta should be 0 or close to it on second time through 
+                print("beta before turning: %.2f" % degrees(beta)) # beta should be 0 or close to it on second time through 
                 print("self.ar_z: %.2f" % self.ar_z) # arz should be close to 0.5 which is current ll_dist  
                 alpha_dist = cm.third_side(self.ar_z, ll_dist, beta) # alpha dist should be tiny tiny 
                 print("alpha_dist in turn_alpha: %.2f" % alpha_dist) 
 
                 # beta is the most descive parameter as to whether this robot does this turn routine 
-                if beta <= radians(15): # play with this 
+                if beta <= radians(15): # play with this -- this can probably be only check case tbh 
                     # this will take care of alpha's less than 0.17 second time through 
                     print "dont need to turn alpha OR move alpha - BETA is very low - robot is well aligned"
                     self.state = 'move_perf'
@@ -202,6 +203,7 @@ class Main:
                     dif2go = abs(alpha - dif)
 
                     # rotate until angled 'alpha' away from the orientation in 'zerox'
+                    # difference is increasing -- that is why this is here 
                     if dif2go < radians(3): #TODO: replace with SMALLANGLE constant 
                         print("dif2go: %.2f" % degrees(dif2go))
                         print("twist velocity:")
@@ -219,13 +221,28 @@ class Main:
             elif self.state == 'move_alpha':
                 print "innnnn move_alpha"
                 # want beta to be near 0, if beta is close to 180, then alpha will be 0.75m when z is low 
-                print("beta: %.2f" % degrees(beta)) 
+                print("beta in move alpha: %.2f" % degrees(beta)) 
                 print("self.ar_z: %.2f" % self.ar_z)
-                alpha_dist = cm.third_side(self.ar_z, ll_dist, beta)
-                print("alpha_dist in move_alpha: %.2f" % alpha_dist)
-
+                print("alpha_dist in move_alpha FROM TURN ALPHA: %.2f" % alpha_dist)
+                # recalculating alpha_dist with knowledge that beta is 0 + alpha
+                alpha_dist = cm.third_side(self.ar_z, ll_dist, beta) # beta is going to be messed up after you turn alpha, so that will mess up alpha dist
+                # simplest solution -- don't recalculate alpha_dist here just do it only before moving beta 
+                print("alpha_dist in move_alpha: %.2f" % alpha_dist) # should ideally be the same, prolly wont be 
+                
+                # this is ok if alpha_dist is constantly being recalculated with the  WRONG BETA - lol comment this out!
                 if alpha_dist > 0.05:  #TODO: replace with a constant for this accuracy
                     self.execute_command(self.mover.go_forward_K(alpha_dist))
+
+                # more correct way 
+                # position at time started moving ar_dist 
+                past_pos.append(self.position)
+                dist_traveled =  cm.dist_btwn(self.position, past_pos[0])
+                print("dif: %.2f" % degrees(dif))
+                dist2go = abs(alpha_dist - dist_traveled)
+                if dist2go > 0.01:
+                    print("dist2go: %.2f" % degrees(dist2go))
+                    self.execute_command(self.mover.go_forward_K(alpha_dist))
+
                 # this will always happen the first time 
                 elif abs(self.ar_x) > xAcc:
                     print "back to zeroing x "
@@ -233,9 +250,9 @@ class Main:
                 else: 
                     print "moving forward to artag"
                     self.state = "move_perf"
-            
+
+            # move in a straight line to the ar tag 
             elif self.state == 'move_perf':
-                # move to the ar tag 
                 print self.state
                 print("self.ar_z: %.2f" % self.ar_z)
                 if self.ar_z > 0.25:
@@ -243,11 +260,11 @@ class Main:
                 else:
                     print "park_it"
                     self.state = "park_it"
-            
+
+            # wait to recieve package 
             elif self.state == "park_it":
-                # wait to recieve package 
                 self.execute_command(self.mover.stop())
-                print "slee[ing"
+                print "sleeping"
                 count+=1
                 print count
                 rospy.sleep(1)
@@ -255,18 +272,17 @@ class Main:
                     print "back out"
                     self.state = "back out"
 
-            elif self.state == "back out":
-                    # backout 
+            # backout 
+            elif self.state == "back out":  
                     self.execute_command(self.mover.back_out())
                     print self.ar_z
                     if self.ar_z > 0.7:
                         self.state = 'done'
 
+            # done with the parking sequence!
             elif self.state == "done":
                     self.execute_command(self.mover.stop())
                     print "done parking :)"
-
-
 
            #self.rate.sleep()
 
