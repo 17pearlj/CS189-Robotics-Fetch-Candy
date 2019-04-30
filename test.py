@@ -81,14 +81,29 @@ def third_side(a, b, gamma):
     """
     return math.sqrt(a**2 + b**2 - (2 * a * b * math.cos(gamma)))
 
-def get_angle_ab(a, b, c):
-    """
-    returns angle in radians that is between a and b given three sides 
-    """
-    return math.acos((a**2 + b**2 - c**2)/ (2 * a * b))
+# alpha dist starts increasing??           
+# 0.34
+# arz - 0.90
+#alpha_dist = cm.third_side(self.ar_z, ll_dist, beta)
 
-# print third_side(3, 4, math.radians(30))
-# print math.degrees(get_angle_ab(3,4,5))
+# decreaseses as z decreases 
+# print cm.third_side(0.9, 0.5, math.radians(89))
+# print cm.third_side(0.8, 0.5, math.radians(89))
+# print cm.third_side(0.7, 0.5, math.radians(89))
+# print cm.third_side(0.6, 0.5, math.radians(89))
+
+# decreaseses as z decreases 
+# print cm.third_side(0.25, 0.5, math.radians(180))
+# print cm.third_side(0.25, 0.5, math.radians(170))
+# print cm.third_side(0.25, 0.5, math.radians(10))
+# print cm.third_side(0.25, 0.5, math.radians(0))
+# print cm.third_side(0.001, 0.5, math.radians(0.001))
+
+print cm.third_side(0.5, 0.5, math.radians(30))
+print cm.third_side(0.5, 0.5, math.radians(20))
+print cm.third_side(0.5, 0.5, math.radians(15))
+print cm.third_side(0.5, 0.5, math.radians(1))
+
 
 
 def get_angle_ab(a, b, c):
@@ -111,110 +126,212 @@ def get_angle_ab(a, b, c):
     else:
             return -222
 
+# cm.get_angle_ab(self.ar_z, alpha_dist, ll_dist)
 
-print math.degrees(get_angle_ab(0.9, 0.31, 0.7))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#print math.degrees(get_angle_ab(0.5, 0.5, 0.1))
 
 
 
 
 # old code
 
-# while (self.state == 'wander'):
+# while (state == 'wander'):
 #                 # just wandering around 
-#                 move_cmd = self.mover.wander()
+#                 move_cmd = mover.wander()
             
 #                 # current location will always be free :)
-#                 self.mapper.updateMapFree(self.position)
+#                 mapper.updateMapFree(position)
                 
 #                 # # this info will come from depth senor processing
-#                 if (self.obstacle_seen == True):
-#                     self.mapper.updateMapObstacle()
+#                 if (obstacle_seen == True):
+#                     mapper.updateMapObstacle()
 
 #                 # # map the ARTAG using info from ARTAG sensor stored in self
-#                 # elif (self.AR_seen == True): 
-#                 #     self.mapper.updateMapAR()
+#                 # elif (AR_seen == True): 
+#                 #     mapper.updateMapAR()
 
 #                 # if there are ARTags that have not yet been visited, choose one to visit 
-#                 if (len(self.AR_q) is not 0 and all(x[2] == 'unvisited' for x in self.AR_q.values())):
-#                     self.AR_curr = self.mover.choose_AR(self.AR_q) 
+#                 if (len(AR_q) is not 0 and all(x[2] == 'unvisited' for x in AR_q.values())):
+#                     AR_curr = mover.choose_AR(AR_q) 
 #                     print "CURRENT AR TAG:"
-#                     print self.AR_curr
+#                     print AR_curr
 #                     # robot will now go to AR tag 
-#                     if self.AR_curr is not -1:
-#                         self.prev_state = 'wander'
-#                         self.state = 'go_to_AR'
+#                     if AR_curr is not -1:
+#                         prev_state = 'wander'
+#                         state = 'go_to_AR'
 #                     else:
-#                         self.state = 'wander'
+#                         state = 'wander'
 
-#                 self.cmd_vel.publish(move_cmd)
-#                 self.rate.sleep()
+#                 cmd_vel.publish(move_cmd)
+#                 rate.sleep()
                     
 
 #             # zero in on an ARTag 
-#             elif (self.state == 'go_to_AR'):
-#                 move_cmd, self.AR_close, self.obstacle_OFF = self.mover.go_to_AR(self.AR_q, self.AR_curr, self.orientation)
+#             elif (state == 'go_to_AR'):
+#                 move_cmd, AR_close, obstacle_OFF = mover.go_to_AR(AR_q, AR_curr, orientation)
 #                 # only want to do the ARTag procedure when we are close enough to the AR tags 
-#                 if (self.AR_close == True):
-#                     self.prev_state = 'go_to_AR'
-#                     self.state = 'handle_AR'
+#                 if (AR_close == True):
+#                     prev_state = 'go_to_AR'
+#                     state = 'handle_AR'
                       
-#             elif (self.state == 'handle_AR'):
+#             elif (state == 'handle_AR'):
 #                 print "handle that"
 #                 orient_more = None
 
-#                 orient_more, move_cmd = self.mover.close_orient(self.AR_q, self.AR_curr, self.orientation)
+#                 orient_more, move_cmd = mover.close_orient(AR_q, AR_curr, orientation)
 #                 if (orient_more is 'good'):
-#                     move_cmd = self.mover.stop()
+#                     move_cmd = mover.stop()
 #                     rospy.sleep(10)
 #                     orient_more = 'back_out'
         
 #                 elif (orient_more == 'back_out'):
-#                     move_cmd = self.mover.back_out()
-#                     self.obstacle_OFF = False
-#                     self.state = 'wander'
-#                     self.handle_AR_step = 0
-#                     self.prev_state = 'handle_AR'
+#                     move_cmd = mover.back_out()
+#                     obstacle_OFF = False
+#                     state = 'wander'
+#                     handle_AR_step = 0
+#                     prev_state = 'handle_AR'
 
 
 
-#                 # self.handle_AR_step = self.handle_AR_step + 1
-#                 # print "SSS %d" % self.handle_AR_step
-#                 # move_cmd = self.mover.handle_AR(self.AR_q, self.AR_curr, self.handle_AR_step)
+#                 # handle_AR_step = handle_AR_step + 1
+#                 # print "SSS %d" % handle_AR_step
+#                 # move_cmd = mover.handle_AR(AR_q, AR_curr, handle_AR_step)
 #                 # # pause for 10 seconds
                 
-#                 # if (self.handle_AR_step == 5):
+#                 # if (handle_AR_step == 5):
 #                 #     print "enter"
-#                 #     self.obstacle_OFF = False
-#                 #     self.state = 'wander'
-#                 #     self.handle_AR_step = 0
-#                 #     self.prev_state = 'handle_AR'
+#                 #     obstacle_OFF = False
+#                 #     state = 'wander'
+#                 #     handle_AR_step = 0
+#                 #     prev_state = 'handle_AR'
                     
                     
+# theta = radians(44)
+# ar_x = 0.5
+# ar_z = 0.1
+# def run():
+#         """
+#         - Control the state that the robot is currently in 
+#         - Run until Ctrl+C pressed
+#         :return: None
+#         """
+#         count = 0
+#         # constant goal dist from robot, parallel distance 
+#         ll_dist = 0.5 #m
+#         # arrays to save the orientation at a certain distance 
+#         past_orr = []
+#         past_orr1 = []
 
+#         while not rospy.is_shutdown(): 
+#             #  local twist object will be shared by all the states 
+#             #rint degrees(ar_orientation)
+#             # move_cmd = Twist()
+
+            
+#             K_rot = 0.05
+#             xK_rot = 2
+#             xAcc = 0.05
+
+
+#             if state is 'searching':
+#                 # go to next state on next loop through 
+#                 # orientation of ar_tag wrt robot
+#                 theta = abs(ar_orientation)
+#                 beta = abs(radians(180) - theta)
+#                 state = 'zerox'
+
+#             if state is 'zerox':
+#                 if abs(ar_x) > xAcc:
+#                     print("x: %.2f" % ar_x)
+#                     # need to change so it twists in the shortest way - proportional control later
+#                     # if ar_x > 0:)
+#                     print("twist velocity:")
+#                     print -1*xK_rot*ar_x 
+#                     #execute_command(mover.twist(-1*xK_rot*ar_x))
+#                     # elif ar_x < 0:
+#                     #     execute_command(mover.twist(-1*K_rot*ar_x)
+#                 else:
+#                     print "zeroed x"
+#                     state = 'turn_alpha'
+            
+#             elif state is 'turn_alpha':
+#                 print "in turn_alpha"
+#                 print("beta: %.2f" % degrees(beta))
+#                 alpha_dist = cm.third_side(ar_z, ll_dist, beta) 
+#                 print("alpha_dist in turn_alpha: %.2f" % alpha_dist)
+#                 alpha = cm.get_angle_ab(ar_z, alpha_dist, ll_dist)
+#                 print("alpha: %.2f" % degrees(alpha))
+#                 if alpha_dist <= 0.5:
+#                     print "dont need to turn - alpha_dist is very low"
+#                     state = 'move_alpha'
+#                 elif alpha is -1000:
+#                     print "dont need to turn alpha is none"
+#                     state = 'move_alpha'
+#                 else: 
+#                     past_orr.append(orientation)
+#                     dif =  abs(orientation - past_orr[0])
+#                     print("dif: %.2f" % degrees(dif))
+#                     dif2go = abs(alpha - dif)
+
+#                     # rotate until angled 'alpha' to robot
+#                     if dif2go < radians(3):
+                        
+#                         print("dif2go: %.2f" % degrees(dif2go))
+#                         print("twist velocity:")
+#                         print 4*K_rot*dif2go
+#                         #execute_command(mover.twist(4*K_rot*dif2go))
+#                     else:
+#                         # move to next state when this has happened -- no check?
+#                         print "dont need to turn much - go to move_alpha"
+#                         #execute_command(mover.stop())
+#                         state = 'move_alpha'
+            
+# # 0.34
+# # arz - 0.90
+#             elif state == 'move_alpha':
+#                 print "innnnn move_alpha"
+#                 print("beta: %.2f" % degrees(beta))
+#                 print("ar_z: %.2f" % ar_z)
+                
+#                 alpha_dist = cm.third_side(ar_z, ll_dist, beta)
+#                 print("alpha_dist in move_alpha: %.2f" % alpha_dist)
+#                 if alpha_dist > 0.05: 
+#                     #execute_command(mover.go_forward_K(alpha_dist))
+#                 elif abs(ar_x) > xAcc:
+#                     print "back to zeroing x "
+#                     state = 'zerox'
+#                 else: 
+#                     print "moving forward to artag"
+#                     state = "move_perf"
+            
+#             elif state == 'move_perf':
+#                 # move to the ar tag 
+#                 print state
+#                 print("ar_z: %.2f" % ar_z)
+#                 if ar_z > 0.25:
+#                     #execute_command(mover.go_forward_K(ar_z))
+#                 else:
+#                     print "park_it"
+#                     state = "park_it"
+            
+#             elif state == "park_it":
+#                 # wait to recieve package 
+#                 #execute_command(mover.stop())
+#                 print "slee[ing"
+#                 count+=1
+#                 print count
+#                 rospy.sleep(1)
+#                 if count > 10:
+#                     print "back out"
+#                     state = "back out"
+
+#             elif state == "back out":
+#                     # backout 
+#                     #execute_command(mover.back_out())
+#                     print ar_z
+#                     if ar_z > 0.7:
+#                         state = 'done'
+
+#             elif state == "done":
+#                     #execute_command(mover.stop())
+#                     print "done parking :)"
