@@ -30,7 +30,7 @@ import cool_math as cm
 VALID_IDS = range(18)
 Home = 1
 
-class Main_test:
+class Main2:
     def __init__(self):
         # information about the robot's current position and orientation relative to start
         self.position = [0, 0]
@@ -68,6 +68,10 @@ class Main_test:
         self.close_VERY = False #if we are extremely close to the ar_tag, we are just going to park or get bumped
         self.AR_seen = False
         
+        # mapping object will come from imported module 
+        self.mapper = map_script.MapMaker()
+        self.mapper.position = self.position
+        self.mapper.orientation = self.orientation
         self.mover = move_script.MoveMaker()
         self.markers = {}
 
@@ -75,7 +79,7 @@ class Main_test:
 
         # # ---- rospy stuff ----
         # Initialize the node
-        rospy.init_node('Main_test', anonymous=False)
+        rospy.init_node('Main2', anonymous=False)
 
         # Tell user how to stop TurtleBot
         rospy.loginfo("To stop TurtleBot CTRL + C")
@@ -110,8 +114,6 @@ class Main_test:
         # TurtleBot will stop if we don't keep telling it to move.  How often should we tell it to move? 5 Hz
         self.rate = rospy.Rate(5)
 
-        # actually handle ar with imported module
-        self.handle_ar = handle_ar.Handle_AR(self.cmd_vel, self.rate)
 
 
         # Subscribe to topic for AR tags
@@ -517,7 +519,7 @@ class Main_test:
 
             # obstacle must be even larger to get the state to be switched 
             if (w*h > 400):
-                if (self.obstacle_OFF == False and self.close_VERY = False):
+                if (self.obstacle_OFF == False and self.close_VERY == False):
                     print "avoiding obstacle"
                     self.state = 'avoid_obstacle'
  

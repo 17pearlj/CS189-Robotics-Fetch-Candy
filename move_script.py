@@ -10,6 +10,7 @@ from geometry_msgs.msg import Twist
 # constant for speed 
 LIN_SPEED = 0.2/2 # 0.1 m/s
 ROT_SPEED = math.radians(15)  # 45 deg/s in radians/s
+ROT_SPEED_2 = math.radians(45)  # 45 deg/s in radians/s
 ROT_K = 5  # Constant for proportional angular velocity control
 LIN_K = 0.5  # Constant for proportional linear velocity control
 
@@ -30,7 +31,12 @@ class MoveMaker:
         self.move_cmd.angular.z = 0
 
         return self.move_cmd
-    
+    def wait(self):
+        self.move_cmd.linear.x = 0
+        self.move_cmd.angular.z = 0
+        return self.move_cmd
+
+
     def go_forward(self):
         self.move_cmd.linear.x = LIN_SPEED
         self.move_cmd.angular.z = 0
@@ -93,14 +99,14 @@ class MoveMaker:
         self.orientation = my_orr
         if (str == 'forward'):
             self.move_cmd.angular.z = 0
-            self.move_cmd.linear.x = LIN_SPEED
+            self.move_cmd.linear.x = LIN_SPEED * 2
         elif (str == 'left'):
             print "lleft"
-            self.move_cmd.angular.z = ROT_SPEED
+            self.move_cmd.angular.z = ROT_SPEED_2
             self.move_cmd.linear.x = 0
         elif (str == 'right'):
             print "rright"
-            self.move_cmd.angular.z = -ROT_SPEED
+            self.move_cmd.angular.z = -ROT_SPEED_2
             self.move_cmd.linear.x = 0
         return self.move_cmd
     

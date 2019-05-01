@@ -146,7 +146,7 @@ class Main:
         # want to zero in on x quickly
         xK_rot = 2
         # desired accuracy when zeroing in on ARTag 
-        xAcc = 0.05
+        xAcc = 0.07
         alpha_dist = 0
         timer2 = 0
 
