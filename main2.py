@@ -227,13 +227,14 @@ class Main2:
     def park(self):
         """
         - Control the state that the robot is currently in 
+        - Run until Ctrl+C pressed
         :return: None
         """
         # used to determine how long to sleep 
         count = 0
 
         # constant goal distance from robot before moving to part 
-        ll_dist = 0.5 #m
+        ll_dist = 0.7 #m
 
         # arrays to save the orientation at a certain instance 
         past_orr = []
@@ -245,7 +246,7 @@ class Main2:
         # want to zero in on x quickly
         xK_rot = 2
         # desired accuracy when zeroing in on ARTag 
-        xAcc = 0.05
+        xAcc = 0.07
         alpha_dist = 0
         timer2 = 0
 
@@ -260,6 +261,7 @@ class Main2:
                 self.state2 = 'zerox'
             elif self.state2 is 'searching2':
                 print "lost tag looking for another"
+                # should only go a certain angle each way - TODO
                 self.execute_command(self.mover.twist(radians(-15)))
                 if rospy.Time.now() - timer2 > rospy.Duration(5):
                     print "lost artag - need to return! and look for it "
@@ -275,7 +277,7 @@ class Main2:
                     print("x: %.2f" % self.ar_x)
                     print("twist velocity:")
                     print -1*xK_rot*self.ar_x 
-                    self.execute_command(self.mover.twist(-1*xK_rot*self.ar_x))
+                    self.execute_command(self.mover.twist(-0.8*xK_rot*self.ar_x))
                 else:
                     print "zeroed x"
                     
@@ -300,14 +302,14 @@ class Main2:
                 # note this comment out - the robot should always turn???
                 # robot should not need to turn alpha or move alpha on second time through, 
                 # should just go straight to zeroing in 
-                elif alpha_dist <= 0.3: # note this change from 0.5 to 0.01
+                elif alpha_dist <= 0.01: # note this change from 0.5 to 0.01
                     print "dont need to turn OR MOVE - alpha_dist is very low"
                     self.state2 = 'move_perf'
 
                 
                 # this should never happen though, as long as ll_dist is significant
-                elif alpha is -1000:
-                    print "dont need to turn alpha is none"
+                elif abs(alpha) > 100:
+                    print "dont need to turn alpha is invalid"
                     self.state2 = 'move_perf'
                 else: 
                     # save the orientation of the robot at this instance -- might want to look into this 
@@ -322,13 +324,13 @@ class Main2:
                     if dif2go > radians(3): #TODO: replace with SMALLANGLE constant 
                         print("dif2go: %.2f" % degrees(dif2go))
                         print("twist velocity:")
-                        print -4*dif2go
-                        self.execute_command(self.mover.twist(-4*dif2go))
+                        print 2*dif2go
+                        self.execute_command(self.mover.twist(2*dif2go))
                     else:
                         # move to next state when this has happened -- no check?
                         print "dont need to turn much - go to move_alpha"
                         self.execute_command(self.mover.stop())
-                        self.state2 = 'move_alpha'
+                        self.state = 'move_alpha'
 # alpha dist starts increasing??           
 # 0.34
 # arz - 0.90
@@ -355,7 +357,7 @@ class Main2:
                 dist_traveled =  cm.dist_btwn(self.position, past_pos[0])
                 print("dist_traveled: %.2f" % dist_traveled)
                 dist2go = abs(alpha_dist) - abs(dist_traveled)
-                if dist2go > 0.09:
+                if dist2go > 0.01:
                     print("dist2go: %.2f" % dist2go)
                     self.execute_command(self.mover.go_forward_K(0.5*alpha_dist))
 
@@ -374,14 +376,21 @@ class Main2:
                 print self.state2
                 print("self.ar_x: %.2f" % self.ar_z)
                 print("self.ar_z: %.2f" % self.ar_x)
-                if abs(self.ar_x) > xAcc:
+                past_xs.append(self.ar_x)
+                # tag has been lost
+                if any(sum(1 for _ in g) > 3 for _, g in groupby(past_xs)):
+                    self.state = "searching2"
+                    timer2 = rospy.Time.now()
+                elif abs(self.ar_x) >= xAcc:
                     print "back to zeroing x "
                     self.state2 = 'zerox'
-                elif self.ar_z > 0.25:
-                    self.execute_command(self.mover.go_forward_K(self.ar_z))
                 else:
-                    print "park_it"
-                    self.state2 = "park_it"
+                    if self.ar_z > 0.25:
+                        print "going to tag"
+                        self.execute_command(self.mover.go_forward_K(0.25*self.ar_z))
+                    else:
+                        print "park_it"
+                        self.state2 = "park_it"
 
             # wait to recieve package 
             elif self.state2 == "park_it":
@@ -404,10 +413,9 @@ class Main2:
             # done with the parking sequence!
             elif self.state2 == "done":
                     self.execute_command(self.mover.stop())
-                    print "done parking :)"
+                    print "done parking :)"  
                     self.close_VERY = False
-                    return 
-
+                    return  
 
     # ------------------ Functions telling us about the robot ---------------- #     
 
