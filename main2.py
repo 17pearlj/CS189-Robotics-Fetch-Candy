@@ -148,7 +148,7 @@ class Main2:
 
                 if (self.state == 'go_to_pos'):
                     orienting = True 
-                    while (not(self.AR_seen) or self.ar_x > 1):
+                    while (not(self.AR_seen) or self.ar_x > .7):
                         while (orienting):
                             print "orienting"
                             pos = self.AR_ids[self.AR_curr]
