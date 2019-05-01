@@ -367,6 +367,8 @@ class Main_test:
 
             # move in a straight line to the ar tag 
             elif self.state2 == 'move_perf':
+                self.close = False
+                self.close_VERY = True
                 print self.state2
                 print("self.ar_x: %.2f" % self.ar_z)
                 print("self.ar_z: %.2f" % self.ar_x)
@@ -401,6 +403,7 @@ class Main_test:
             elif self.state2 == "done":
                     self.execute_command(self.mover.stop())
                     print "done parking :)"
+                    self.close_VERY = False
                     return 
 
 
