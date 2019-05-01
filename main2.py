@@ -26,6 +26,8 @@ import map_script
 import move_script
 import cool_math as cm 
 
+from itertools import groupby
+
 # valid ids for AR Tags
 VALID_IDS = range(18)
 Home = 1
