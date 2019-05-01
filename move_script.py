@@ -83,6 +83,28 @@ class MoveMaker:
         self.move_cmd.angular.z = ROT_SPEED
         return self.move_cmd
 
+    def go_to_pos(self, str, my_pos, my_orr):
+        """
+        TODO: go to position from current location until CORRECT AR tag seen
+        Calls go_to_AR
+        while correct AR is not insight
+        """
+        self.position = my_pos
+        self.orientation = my_orr
+        if (str == 'forward'):
+            self.move_cmd.angular.z = 0
+            self.move_cmd.linear.x = LIN_SPEED
+        elif (str == 'left'):
+            print "lleft"
+            self.move_cmd.angular.z = ROT_SPEED
+            self.move_cmd.linear.x = 0
+        elif (str == 'right'):
+            print "rright"
+            self.move_cmd.angular.z = -ROT_SPEED
+            self.move_cmd.linear.x = 0
+        return self.move_cmd
+    
+    
     # --------- ARTags ------------------#
     def choose_AR(self, my_dict):
         """
