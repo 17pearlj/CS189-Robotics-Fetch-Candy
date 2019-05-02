@@ -52,6 +52,7 @@ class Main2:
         # dictionary for ar ids and coordinates
         self.AR_ids = {
             1: (0, 17), 
+            11: (35, 18)
             2: (4, 24),
             3: (45, 24),
             4: (31, 14), 
@@ -170,11 +171,13 @@ class Main2:
                                 self.cmd_vel.publish(move_cmd)
                                 self.rate.sleep()
                         else:
-                            if ((self.AR_curr == 51 or self.AR_curr == 61)):
-                                for i in range(100):
+                            if ((self.AR_curr > 10)):
+                                travel_time = 100
+                                if (self.AR_curr == (Home*10) + 1):
+                                    travel_time = 40 #check on this
+                                for i in range(travel_time):
                                     move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
-                                    self.cmd_vel.publish(move_cmd)
-                                    self.rate.sleep()
+                                    self.execute_command(move_cmd)
                                 self.AR_curr = (self.AR_curr- 1) / 10
                                 orienting = True
                                 
@@ -196,10 +199,11 @@ class Main2:
                     # return from handle ar!
                     self.AR_seen = False
                     self.returning = not(self.returning)
-                    if (self.returning):
-                        # put case for 5 and 6
-                        # if 4 is still jenky, fix that
-                        self.AR_curr = Home
+                    if (self.AR_curr is not Home):
+                        if (self.AR_curr == 6 or self.AR_curr == 5):
+                            self.AR_curr = (Home * 10) + 1
+                        else:
+                            self.AR_curr = Home
                         self.prev_state = 'go_to_AR'
                         self.state = 'go_to_pos'
                     else:
