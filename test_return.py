@@ -59,7 +59,7 @@ class Main2:
             51: (35, 18), #fake location to get around table
             5: (23, 10),
             61: (35, 18), #fake location to get around table
-            6: (20, 8),
+            6: (23, 8),
             7: (9, 5)
         } 
 
