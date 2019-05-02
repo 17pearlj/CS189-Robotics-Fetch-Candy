@@ -1,6 +1,5 @@
 """
-Milestone 2: Fetch Candy
-Main script controlling robot functionality
+Main3: this will test out functionality of moving to ekf when the robot loses ar_tag
 """
 
 import random
@@ -128,9 +127,9 @@ class Main2:
     
     def run(self): #things to test: make sure no obstacle is triggered during clean path,
                     # make sure obstacle will be triggered
-                    # make sure 4, 6, and 5 return work (test the 40 seconds)
+                    # make sure 6 and 7 return work
 
-                    #find what to do when ar_tag not visible
+                    #find what to do when ar_tag not visible: this file tests that
         """
         - Control the state that the robot is currently in 
         - Run until Ctrl+C pressed
@@ -278,11 +277,9 @@ class Main2:
                 beta = abs(radians(180) - theta)
                 self.state2 = 'zerox'
             elif self.state2 is 'searching2':
-                print "lost tag looking for another"
-                # should only go a certain angle each way - TODO
-                self.execute_command(self.mover.twist(radians(-15)))
-                if rospy.Time.now() - timer2 > rospy.Duration(5):
-                    print "lost artag - need to return! and look for it "
+                self.AR_seen = False
+                self.prev_state = self.state
+                self.state = "go_to_pos"
 
             # turn to face the AR_TAG
             if self.state2 is 'zerox':
