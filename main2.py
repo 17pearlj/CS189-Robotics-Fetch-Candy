@@ -51,19 +51,19 @@ class Main2:
         self.AR_curr = -1
         # dictionary for ar ids and coordinates
         self.AR_ids = {
-            1: (2, 15), 
-            11: (35, 18)
+            1: (0, 17), 
+            11: (15, 18)
             2: (4, 24),
             3: (45, 24),
             4: (31, 14), 
             51: (35, 18), #fake location to get around table
             5: (23, 10),
             61: (35, 18), #fake location to get around table
-            6: (25, 8),
+            6: (23, 8),
             7: (9, 5)
         } 
 
-
+        self.returning = False
         self.ar_orientation = 0
         self.ar_x = 0
         self.ar_z = 0
@@ -126,11 +126,7 @@ class Main2:
    
     
     
-    def run(self): #things to test: make sure no obstacle is triggered during clean path,
-                    # make sure obstacle will be triggered
-                    # make sure 4, 6, and 5 return work (test the 40 seconds)
-
-                    #find what to do when ar_tag not visible
+    def run(self):
         """
         - Control the state that the robot is currently in 
         - Run until Ctrl+C pressed
@@ -146,7 +142,6 @@ class Main2:
                 while (self.state == 'wait'):
                     # just wait around 
                     move_cmd = self.mover.wait()
-                    self.execute_command(move_cmd)
                     if (self.AR_curr != -1):
                         print "changing state to go_to_pos"
                         self.prev_state = 'wait'
@@ -173,12 +168,13 @@ class Main2:
                                     move_cmd = self.mover.go_to_pos("left", self.position, self.orientation)
                                 else:
                                     move_cmd = self.mover.go_to_pos("right", self.position, self.orientation)
-                                self.execute_command(move_cmd)
+                                self.cmd_vel.publish(move_cmd)
+                                self.rate.sleep()
                         else:
                             if ((self.AR_curr > 10)):
                                 travel_time = 100
                                 if (self.AR_curr == (Home*10) + 1):
-                                    travel_time = 40 #check on this
+                                    travel_time = 20 #check on this
                                 for i in range(travel_time):
                                     move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
                                     self.execute_command(move_cmd)
@@ -188,20 +184,22 @@ class Main2:
                             else: 
                                 move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
                                 print "forward"
-                                self.execute_command(move_cmd)
+                                self.cmd_vel.publish(move_cmd)
+                                self.rate.sleep()
                     if (self.AR_seen):
                         print "see AR"
-                        #self.sounds.publish(Sound.ON)
+                        self.sounds.publish(Sound.ON)
                         self.prev_state = 'go_to_pos'
                         self.state = 'go_to_AR'
                 
                 elif (self.state == "go_to_AR"): 
                     # -----------handle ar here!!--------#
+                    
                     self.state2 = "searching"
                     self.park()
                     # return from handle ar!
                     self.AR_seen = False
-                    
+                    self.returning = not(self.returning)
                     if (self.AR_curr is not Home):
                         if (self.AR_curr == 6 or self.AR_curr == 5):
                             self.AR_curr = (Home * 10) + 1
@@ -213,7 +211,8 @@ class Main2:
                         self.AR_curr = -1
                         self.prev_state = 'go_to_AR'
                         self.state = 'wait'
-                self.execute_command(move_cmd)
+                self.cmd_vel.publish(move_cmd)
+                self.rate.sleep()
                 # self.sounds.publish(Sound.ON)
             if (self.state == "avoid_obstacle" or self.state == "bumped"):
                 self.sounds.publish(Sound.ON)
@@ -221,9 +220,9 @@ class Main2:
                 sec = 0
                 if (self.state == bumped and not self.close_VERY):
                     print "bump when not very close to ar_tag"
-                        # we may not want it to move backward (we would be going off our path)
-                    # self.execute_command(self.mover.bumped())
-                    sec = 5
+                    # we may not want it to move backward (we would be going off our path)
+                   # self.execute_command(self.mover.bumped())
+                   sec = 5
                 elif (self.close_VERY):
                     print "obstacle when very close to ar_tag!!"
                     sec = 15
@@ -286,6 +285,7 @@ class Main2:
 
             # turn to face the AR_TAG
             if self.state2 is 'zerox':
+                self.close = True
                 past_xs.append(self.ar_x)
                 # tag has been lost
                 if any(sum(1 for _ in g) > 3 for _, g in groupby(past_xs)):
