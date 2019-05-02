@@ -192,7 +192,7 @@ class Main2:
                         self.prev_state = 'go_to_pos'
                         self.state = 'go_to_AR'
                 
-                elif (self.state == "go_to_AR"): 
+                elif (self.state == "go_to_AR" and self.ar_x < .7): 
                     # -----------handle ar here!!--------#
                     
                     self.state2 = "searching"
