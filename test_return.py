@@ -52,7 +52,7 @@ class Main2:
         # dictionary for ar ids and coordinates
         self.AR_ids = {
             1: (0, 17), 
-            11: (15, 18)
+            11: (15, 18),
             2: (4, 24),
             3: (45, 24),
             4: (31, 14), 

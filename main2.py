@@ -52,7 +52,7 @@ class Main2:
         # dictionary for ar ids and coordinates
         self.AR_ids = {
             1: (0, 17), 
-            11: (15, 18)
+            11: (15, 18),
             2: (4, 24),
             3: (45, 24),
             4: (31, 14), 
@@ -149,7 +149,7 @@ class Main2:
 
                 if (self.state == 'go_to_pos'):
                     orienting = True 
-                    while (not(self.AR_seen) or self.ar_x > .7):
+                    while (not(self.AR_seen)):
                         while (orienting):
                             print "orienting"
                             pos = self.AR_ids[self.AR_curr]
@@ -186,13 +186,13 @@ class Main2:
                                 print "forward"
                                 self.cmd_vel.publish(move_cmd)
                                 self.rate.sleep()
-                    if (self.AR_seen):
+                    if (self.AR_seen and self.ar_x < .1):
                         print "see AR"
                         self.sounds.publish(Sound.ON)
                         self.prev_state = 'go_to_pos'
                         self.state = 'go_to_AR'
                 
-                elif (self.state == "go_to_AR" and self.ar_x < .7): 
+                elif (self.state == "go_to_AR"): 
                     # -----------handle ar here!!--------#
                     
                     self.state2 = "searching"
@@ -222,7 +222,7 @@ class Main2:
                     print "bump when not very close to ar_tag"
                     # we may not want it to move backward (we would be going off our path)
                    # self.execute_command(self.mover.bumped())
-                   sec = 5
+                    sec = 5
                 elif (self.close_VERY):
                     print "obstacle when very close to ar_tag!!"
                     sec = 15
