@@ -52,14 +52,14 @@ class Main2:
         # dictionary for ar ids and coordinates
         self.AR_ids = {
             1: (0, 17), 
-            11: (35, 18)
+            11: (15, 18)
             2: (4, 24),
             3: (45, 24),
             4: (31, 14), 
             51: (35, 18), #fake location to get around table
             5: (23, 10),
             61: (35, 18), #fake location to get around table
-            6: (25, 8),
+            6: (20, 8),
             7: (9, 5)
         } 
 
@@ -174,7 +174,7 @@ class Main2:
                             if ((self.AR_curr > 10)):
                                 travel_time = 100
                                 if (self.AR_curr == (Home*10) + 1):
-                                    travel_time = 40 #check on this
+                                    travel_time = 20 #check on this
                                 for i in range(travel_time):
                                     move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
                                     self.execute_command(move_cmd)
@@ -214,14 +214,22 @@ class Main2:
                 self.rate.sleep()
                 # self.sounds.publish(Sound.ON)
             if (self.state == "avoid_obstacle" or self.state == "bumped"):
+                self.sounds.publish(Sound.ON)
+                print "OBSTACLE OR BUMP"
                 sec = 0
                 if (self.state == bumped and not self.close_VERY):
-                    self.execute_command(self.mover.bumped())
-                if (self.close_VERY):
+                    print "bump when not very close to ar_tag"
+                    # we may not want it to move backward (we would be going off our path)
+                   # self.execute_command(self.mover.bumped())
+                   sec = 5
+                elif (self.close_VERY):
+                    print "obstacle when very close to ar_tag!!"
                     sec = 15
-                if (self.close == False):
+                elif (self.close == False):
+                    print "obstacle, not close to ar tag"
                     sec = 2
                 else:
+                    print "obstacle, moderately close to ar tag"
                     sec = 5
                 rospy.sleep(sec)
                 self.state = self.prev_state
