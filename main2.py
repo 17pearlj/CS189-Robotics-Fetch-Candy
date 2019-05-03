@@ -63,7 +63,7 @@ class Main2:
             7: (9, 5)
         } 
 
-        self.returning = False
+        
         self.ar_orientation = 0
         self.ar_x = 0
         self.ar_z = 0
@@ -149,7 +149,7 @@ class Main2:
 
                 if (self.state == 'go_to_pos'):
                     orienting = True 
-                    while (not(self.AR_seen)):
+                    while (not(self.AR_seen) or self.ar_z >= 1.5):
                         while (orienting):
                             print "orienting"
                             pos = self.AR_ids[self.AR_curr]
@@ -186,7 +186,7 @@ class Main2:
                                 print "forward"
                                 self.cmd_vel.publish(move_cmd)
                                 self.rate.sleep()
-                    if (self.AR_seen and self.ar_x < .1):
+                    if (self.AR_seen and self.ar_z < 1.5):
                         print "see AR"
                         self.sounds.publish(Sound.ON)
                         self.prev_state = 'go_to_pos'
@@ -197,11 +197,13 @@ class Main2:
                     
                     self.state2 = "searching"
                     if self.park() == -1:
+                        print " parking unsuccesful-  going back to go to pos"
+                        self.AR_seen = False
                         self.state = 'go_to_pos'
                     else:
                         # return from handle ar!
                         self.AR_seen = False
-                        self.returning = not(self.returning)
+                        
                     if (self.AR_curr is not Home):
                         if (self.AR_curr == 6 or self.AR_curr == 5):
                             self.AR_curr = (Home * 10) + 1
@@ -283,12 +285,19 @@ class Main2:
             elif self.state2 is 'searching2':
                 print "lost tag looking for another"
                 past_xs.append(self.ar_x)
+                count2 = count2 +  1
+                count3 = count2 % 20
+                print count3
                 # should only go a certain angle each way - TODO
-                self.execute_command(self.mover.twist(radians(-15)))
+                if count3 < 10:  
+                    self.execute_command(self.mover.twist(radians(-30)))
+                elif count3 >= 10:
+                    self.execute_command(self.mover.twist(radians(30)))
 
-                if past_xs[-1] != past_xs[-2]:
-                    print "found it again!"
-                    self.state2 = 'zerox'
+                if len(past_xs) > 3:
+                    if past_xs[-1] != past_xs[-2]:
+                        print "found it again!"
+                        self.state2 = 'zerox'
 
                 
                 elif rospy.Time.now() - timer2 > rospy.Duration(10):
@@ -297,7 +306,9 @@ class Main2:
 
             # turn to face the AR_TAG
             if self.state2 is 'zerox':
+                print "in zerox"
                 past_xs.append(self.ar_x)
+                
                 # tag has been lost
                 if any(sum(1 for _ in g) > 10 for _, g in groupby(past_xs)):
                     self.state2 = "searching2"
@@ -394,7 +405,7 @@ class Main2:
                 dist2go = abs(alpha_dist) - abs(dist_traveled)
                 if dist2go > 0.01:
                     print("dist2go: %.2f" % dist2go)
-                    self.execute_command(self.mover.go_forward_K(0.5*alpha_dist))
+                    self.execute_command(self.mover.go_forward_K(0.3*alpha_dist))
 
                 # this will always happen the first time 
                 elif abs(self.ar_x) > xAcc:
@@ -450,7 +461,7 @@ class Main2:
                     self.execute_command(self.mover.stop())
                     print "done parking :)"
                     self.close_VERY = False
-                    return
+                    return 0
 
             self.rate.sleep()
 
@@ -472,7 +483,7 @@ class Main2:
                 distance = cm.dist((pos.x, pos.y, pos.z))
 
                 self.ar_x = pos.x
-                print "X DIST TO AR TAG %0.2f" % self.ar_x
+                # print "X DIST TO AR TAG %0.2f" % self.ar_x
                 self.ar_z = pos.z
 
                 orientation = marker.pose.pose.orientation

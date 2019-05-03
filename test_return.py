@@ -149,7 +149,7 @@ class Main2:
 
                 if (self.state == 'go_to_pos'):
                     orienting = True 
-                    while (not(self.AR_seen) or self.ar_x > .7):
+                    while (not(self.AR_seen) or self.ar_z >= 1.5):
                         while (orienting):
                             print "orienting"
                             pos = self.AR_ids[self.AR_curr]
@@ -186,7 +186,7 @@ class Main2:
                                 print "forward"
                                 self.cmd_vel.publish(move_cmd)
                                 self.rate.sleep()
-                    if (self.AR_seen):
+                    if (self.AR_seen and self.ar_z < 1.5):
                         print "see AR"
                         self.sounds.publish(Sound.ON)
                         self.prev_state = 'go_to_pos'
@@ -221,7 +221,7 @@ class Main2:
                     print "bump when not very close to ar_tag"
                     # we may not want it to move backward (we would be going off our path)
                    # self.execute_command(self.mover.bumped())
-                   sec = 5
+                    sec = 5
                 elif (self.close_VERY):
                     print "obstacle when very close to ar_tag!!"
                     sec = 15
@@ -592,6 +592,7 @@ class Main2:
         """
 
         if (data.state == BumperEvent.PRESSED):
+            print "BUMPED"
             self.state = 'bumped'
 
     def shutdown(self):
