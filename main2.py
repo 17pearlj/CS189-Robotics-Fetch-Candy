@@ -196,10 +196,12 @@ class Main2:
                     # -----------handle ar here!!--------#
                     
                     self.state2 = "searching"
-                    self.park()
-                    # return from handle ar!
-                    self.AR_seen = False
-                    self.returning = not(self.returning)
+                    if self.park() == -1:
+                        self.state = 'go_to_pos'
+                    else:
+                        # return from handle ar!
+                        self.AR_seen = False
+                        self.returning = not(self.returning)
                     if (self.AR_curr is not Home):
                         if (self.AR_curr == 6 or self.AR_curr == 5):
                             self.AR_curr = (Home * 10) + 1
@@ -251,7 +253,7 @@ class Main2:
         count = 0
 
         # constant goal distance from robot before moving to part 
-        ll_dist = 0.7 #m
+        ll_dist = 0.5 #m
 
         # arrays to save the orientation at a certain instance 
         past_orr = []
@@ -273,22 +275,31 @@ class Main2:
             if self.state2 is 'searching' and len(self.markers) > 0:
                 # save the orientation wrt to AR_TAG
                 print "found a new tag"
+                theta_org = self.ar_orientation
                 theta = abs(self.ar_orientation)
                 beta = abs(radians(180) - theta)
                 self.state2 = 'zerox'
+
             elif self.state2 is 'searching2':
                 print "lost tag looking for another"
+                past_xs.append(self.ar_x)
                 # should only go a certain angle each way - TODO
                 self.execute_command(self.mover.twist(radians(-15)))
-                if rospy.Time.now() - timer2 > rospy.Duration(5):
+
+                if past_xs[-1] != past_xs[-2]:
+                    print "found it again!"
+                    self.state2 = 'zerox'
+
+                
+                elif rospy.Time.now() - timer2 > rospy.Duration(10):
                     print "lost artag - need to return! and look for it "
+                    return -1
 
             # turn to face the AR_TAG
             if self.state2 is 'zerox':
-                self.close = True
                 past_xs.append(self.ar_x)
                 # tag has been lost
-                if any(sum(1 for _ in g) > 3 for _, g in groupby(past_xs)):
+                if any(sum(1 for _ in g) > 10 for _, g in groupby(past_xs)):
                     self.state2 = "searching2"
                     timer2 = rospy.Time.now()
                 elif abs(self.ar_x) > xAcc:
@@ -339,16 +350,22 @@ class Main2:
                     dif2go = abs(alpha - dif)
 
                     # rotate until angled 'alpha' away from the orientation in 'zerox'
-                    if dif2go > radians(3): #TODO: replace with SMALLANGLE constant 
-                        print("dif2go: %.2f" % degrees(dif2go))
+                    if dif2go > radians(0.8): #TODO: replace with SMALLANGLE constant 
+                        print("dif2go in alpha: %.2f" % degrees(dif2go))
                         print("twist velocity:")
                         print 2*dif2go
-                        self.execute_command(self.mover.twist(2*dif2go))
+                        print("theta: %.2f" % degrees(theta_org))
+                        if theta_org < 0:
+                            print "left side"
+                            self.execute_command(self.mover.twist(-2*dif2go))
+                        else:
+                            print "right side"
+                            self.execute_command(self.mover.twist(2*dif2go))
                     else:
                         # move to next state when this has happened -- no check?
-                        print "dont need to turn much - go to move_alpha"
+                        print "dont need to turn much more - go to move_alpha"
                         self.execute_command(self.mover.stop())
-                        self.state = 'move_alpha'
+                        self.state2 = 'move_alpha'
 # alpha dist starts increasing??           
 # 0.34
 # arz - 0.90
@@ -389,21 +406,21 @@ class Main2:
 
             # move in a straight line to the ar tag 
             elif self.state2 == 'move_perf':
+                print self.state2
                 self.close = False
                 self.close_VERY = True
-                print self.state2
                 print("self.ar_x: %.2f" % self.ar_z)
                 print("self.ar_z: %.2f" % self.ar_x)
                 past_xs.append(self.ar_x)
-                # tag has been lost
-                if any(sum(1 for _ in g) > 3 for _, g in groupby(past_xs)):
-                    self.state = "searching2"
+                # tag has been lost -- higher threshold than when zeroing x bc are likely closer
+                if any(sum(1 for _ in g) > 10 for _, g in groupby(past_xs)):
+                    self.state2 = "searching2"
                     timer2 = rospy.Time.now()
-                elif abs(self.ar_x) >= xAcc:
-                    print "back to zeroing x "
+                elif abs(self.ar_x) >= 0.20:
+                    print "back to zeroiing x "
                     self.state2 = 'zerox'
                 else:
-                    if self.ar_z > 0.25:
+                    if self.ar_z > 0.20:
                         print "going to tag"
                         self.execute_command(self.mover.go_forward_K(0.25*self.ar_z))
                     else:
@@ -431,9 +448,12 @@ class Main2:
             # done with the parking sequence!
             elif self.state2 == "done":
                     self.execute_command(self.mover.stop())
-                    print "done parking :)"  
+                    print "done parking :)"
                     self.close_VERY = False
-                    return  
+                    return
+
+            self.rate.sleep()
+
 
     # ------------------ Functions telling us about the robot ---------------- #     
 

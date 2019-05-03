@@ -40,7 +40,7 @@ class Main:
         self.orientation = 0 # CCW +, radians 
 
         # the initialized state, and prev state is 'wander'
-        self.state = 'searching'
+        self.state2 = 'searching'
         #self.prev_state = 'wander'
 
         # depth image for getting obstacles
@@ -134,7 +134,7 @@ class Main:
         count = 0
 
         # constant goal distance from robot before moving to part 
-        ll_dist = 0.7 #m
+        ll_dist = 0.5 #m
 
         # arrays to save the orientation at a certain instance 
         past_orr = []
@@ -149,29 +149,44 @@ class Main:
         xAcc = 0.07
         alpha_dist = 0
         timer2 = 0
+        count2 = 0
 
         while not rospy.is_shutdown(): 
             # TODO: need to put checks 4 whether or not the artag has been recently seen 
             # begin when at least one AR_TAG has been found 
-            if self.state is 'searching' and len(self.markers) > 0:
+            if self.state2 is 'searching' and len(self.markers) > 0:
                 # save the orientation wrt to AR_TAG
                 print "found a new tag"
+                theta_org = self.ar_orientation
                 theta = abs(self.ar_orientation)
                 beta = abs(radians(180) - theta)
-                self.state = 'zerox'
-            elif self.state is 'searching2':
+                self.state2 = 'zerox'
+
+            elif self.state2 is 'searching2':
                 print "lost tag looking for another"
+                past_xs.append(self.ar_x)
                 # should only go a certain angle each way - TODO
-                self.execute_command(self.mover.twist(radians(-15)))
-                if rospy.Time.now() - timer2 > rospy.Duration(5):
+                if count2 % 30 < 15:
+                    count2+=1
+                    self.execute_command(self.mover.twist(radians(-15)))
+                elif count2 % 30 > 15:
+                    self.execute_command(self.mover.twist(radians(-15)))
+
+                if past_xs[-1] != past_xs[-2]:
+                    print "found it again!"
+                    self.state2 = 'zerox'
+
+                
+                elif rospy.Time.now() - timer2 > rospy.Duration(10):
                     print "lost artag - need to return! and look for it "
+                    return
 
             # turn to face the AR_TAG
-            if self.state is 'zerox':
+            if self.state2 is 'zerox':
                 past_xs.append(self.ar_x)
                 # tag has been lost
-                if any(sum(1 for _ in g) > 3 for _, g in groupby(past_xs)):
-                    self.state = "searching2"
+                if any(sum(1 for _ in g) > 10 for _, g in groupby(past_xs)):
+                    self.state2 = "searching2"
                     timer2 = rospy.Time.now()
                 elif abs(self.ar_x) > xAcc:
                     print("x: %.2f" % self.ar_x)
@@ -189,14 +204,19 @@ class Main:
                     alpha = cm.get_angle_ab(self.ar_z, alpha_dist, ll_dist)
                     print("degrees alpha: %.2f" % degrees(alpha))
                     print("regular alpha: %.2f" % alpha)
-                    self.state = 'turn_alpha'
+                    self.state2 = 'turn_alpha'
             
             # turn away from AR_TAG by a small angle alpha
-            elif self.state is 'turn_alpha':
+            elif self.state2 is 'turn_alpha':
+                past_xs.append(self.ar_x)
+                # tag has been lost
+                if any(sum(1 for _ in g) > 10 for _, g in groupby(past_xs)):
+                    self.state2 = "searching2"
+                    timer2 = rospy.Time.now()
                 print "in turn_alpha"      
                 if self.ar_z <= 0.4: 
                     print "dont need to turn - z distance is low"
-                    self.state = 'move_perf'
+                    self.state2 = 'move_perf'
                 
                 # can comment  everything else out 
                 # note this comment out - the robot should always turn???
@@ -204,13 +224,13 @@ class Main:
                 # should just go straight to zeroing in 
                 elif alpha_dist <= 0.01: # note this change from 0.5 to 0.01
                     print "dont need to turn OR MOVE - alpha_dist is very low"
-                    self.state = 'move_perf'
+                    self.state2 = 'move_perf'
 
                 
                 # this should never happen though, as long as ll_dist is significant
                 elif abs(alpha) > 100:
                     print "dont need to turn alpha is invalid"
-                    self.state = 'move_perf'
+                    self.state2 = 'move_perf'
                 else: 
                     # save the orientation of the robot at this instance -- might want to look into this 
                     # if the robot needs to turn alpha more than once, past orr will not be valid! 
@@ -221,21 +241,32 @@ class Main:
                     dif2go = abs(alpha - dif)
 
                     # rotate until angled 'alpha' away from the orientation in 'zerox'
-                    if dif2go > radians(3): #TODO: replace with SMALLANGLE constant 
-                        print("dif2go: %.2f" % degrees(dif2go))
+                    if dif2go > radians(0.8): #TODO: replace with SMALLANGLE constant 
+                        print("dif2go in alpha: %.2f" % degrees(dif2go))
                         print("twist velocity:")
                         print 2*dif2go
-                        self.execute_command(self.mover.twist(2*dif2go))
+                        print("theta: %.2f" % degrees(theta_org))
+                        if theta_org < 0:
+                            print "left side"
+                            self.execute_command(self.mover.twist(-2*dif2go))
+                        else:
+                            print "right side"
+                            self.execute_command(self.mover.twist(2*dif2go))
                     else:
                         # move to next state when this has happened -- no check?
-                        print "dont need to turn much - go to move_alpha"
+                        print "dont need to turn much more - go to move_alpha"
                         self.execute_command(self.mover.stop())
-                        self.state = 'move_alpha'
+                        self.state2 = 'move_alpha'
 # alpha dist starts increasing??           
 # 0.34
 # arz - 0.90
             # move to a position that will allow the robot to move straight towards the robot
-            elif self.state == 'move_alpha':
+            elif self.state2 == 'move_alpha':
+                past_xs.append(self.ar_x)
+                # tag has been lost
+                if any(sum(1 for _ in g) > 20 for _, g in groupby(past_xs)):
+                    self.state2 = "searching2"
+                    timer2 = rospy.Time.now()
                 # want beta to be near 0, if beta is close to 180, then alpha will be 0.75m when z is low 
                 print("beta in move alpha: %.2f" % degrees(beta)) 
                 print("self.ar_z: %.2f" % self.ar_z)
@@ -264,34 +295,36 @@ class Main:
                 # this will always happen the first time 
                 elif abs(self.ar_x) > xAcc:
                     print "back to zeroing x "
-                    self.state = 'zerox'
+                    self.state2 = 'zerox'
                 else: 
                     print "moving forward to artag"
-                    self.state = "move_perf"
+                    self.state2 = "move_perf"
 
             # move in a straight line to the ar tag 
-            elif self.state == 'move_perf':
-                print self.state
+            elif self.state2 == 'move_perf':
+                print self.state2
+                self.close = False
+                self.close_VERY = True
                 print("self.ar_x: %.2f" % self.ar_z)
                 print("self.ar_z: %.2f" % self.ar_x)
                 past_xs.append(self.ar_x)
-                # tag has been lost
-                if any(sum(1 for _ in g) > 3 for _, g in groupby(past_xs)):
-                    self.state = "searching2"
+                # tag has been lost -- higher threshold than when zeroing x bc are likely closer
+                if any(sum(1 for _ in g) > 10 for _, g in groupby(past_xs)):
+                    self.state2 = "searching2"
                     timer2 = rospy.Time.now()
-                elif abs(self.ar_x) >= xAcc:
-                    print "back to zeroing x "
-                    self.state = 'zerox'
+                elif abs(self.ar_x) >= 0.20:
+                    print "back to zeroiing x "
+                    self.state2 = 'zerox'
                 else:
-                    if self.ar_z > 0.25:
+                    if self.ar_z > 0.20:
                         print "going to tag"
                         self.execute_command(self.mover.go_forward_K(0.25*self.ar_z))
                     else:
                         print "park_it"
-                        self.state = "park_it"
+                        self.state2 = "park_it"
 
             # wait to recieve package 
-            elif self.state == "park_it":
+            elif self.state2 == "park_it":
                # self.execute_command(self.mover.stop())
                 print "sleeping"
                 count+=1
@@ -299,19 +332,21 @@ class Main:
                 rospy.sleep(1)
                 if count > 10:
                     print "back out"
-                    self.state = "back out"
+                    self.state2 = "back out"
 
             # backout 
-            elif self.state == "back out":  
+            elif self.state2 == "back out":  
                     self.execute_command(self.mover.back_out())
                     print self.ar_z
                     if self.ar_z > 0.7:
-                        self.state = 'done'
+                        self.state2 = 'done'
 
             # done with the parking sequence!
-            elif self.state == "done":
+            elif self.state2 == "done":
                     self.execute_command(self.mover.stop())
                     print "done parking :)"
+                    self.close_VERY = False
+                    return
 
             self.rate.sleep()
 
@@ -438,9 +473,9 @@ class Main:
 
             # # obstacle must be even larger to get the state to be switched - JK NOT SWITCHING RN
             # if ((w*h > 400) | ((w*h > 200) and (obs_segment == 2))):
-            #     if (self.obstacle_OFF == False and (self.state is not 'handle_AR')):
+            #     if (self.obstacle_OFF == False and (self.state2 is not 'handle_AR')):
             #         print "avoiding obstacle"
-            #         self.state = 'avoid_obstacle'
+            #         self.state2 = 'avoid_obstacle'
             #         # Differentiate between left and right objects
             #         if (obs_segment < 1):  
             #             self.obstacle_side = 'left'
@@ -491,7 +526,7 @@ class Main:
         """
 
         if (data.state == BumperEvent.PRESSED and self.obstacle_OFF == False):
-            self.state = 'bumped'
+            self.state2 = 'bumped'
 
     def shutdown(self):
         """
