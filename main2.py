@@ -285,7 +285,7 @@ class Main2:
             elif self.state2 is 'searching2':
                 print "lost tag looking for another"
                 past_xs.append(self.ar_x)
-                count2 = count2 +  1
+                count2 = count +  1
                 count3 = count2 % 20
                 print count3
                 # should only go a certain angle each way - TODO
