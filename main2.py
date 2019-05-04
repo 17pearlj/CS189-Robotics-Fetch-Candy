@@ -247,7 +247,7 @@ class Main2:
     def execute_command(self, my_move):
         """
         - Just a function to decrease repetion when executing move commands
-        :param a move command with linear and angular velocity set, see move_scipt.py
+        :param: a move command with linear and angular velocity set, see move_scipt.py
         :return: None
         """
         move_cmd = my_move
