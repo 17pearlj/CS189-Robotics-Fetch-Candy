@@ -647,7 +647,6 @@ class Main2:
         :param data: Raw message data from bump sensor 
         :return: None
         """
-
         if (data.state == BumperEvent.PRESSED):
             self.state = 'bumped'
 
@@ -656,8 +655,6 @@ class Main2:
         Pre-shutdown routine. Stops the robot before rospy.shutdown 
         :return: None
         """
-        # TODO: save the map image - maybe put somewhere else?
-
         # Close CV Image windows
         cv2.destroyAllWindows()
         # stop turtlebot
@@ -665,7 +662,7 @@ class Main2:
         # a default Twist has linear.x of 0 and angular.z of 0.  So it'll stop TurtleBot
         self.cmd_vel.publish(Twist())
         # sleep just makes sure TurtleBot receives the stop command prior to shutting down the script
-        rospy.sleep(5)
+        rospy.sleep(1)
 
 if __name__ == '__main__':
     # try:

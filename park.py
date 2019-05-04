@@ -548,7 +548,6 @@ class Main:
         Pre-shutdown routine. Stops the robot before rospy.shutdown 
         :return: None
         """
-        # TODO: save the map image - maybe put somewhere else?
 
         # Close CV Image windows
         cv2.destroyAllWindows()
