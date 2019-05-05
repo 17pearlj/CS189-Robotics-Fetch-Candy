@@ -199,7 +199,7 @@ class Main2:
                             move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
                             print "forward 1"
                             orienting = False
-                            #self.execute_command(move_cmd)
+                            self.execute_command(move_cmd)
                         else:
                             # Turn in the relevant direction
                             if angle_dif < 0:
@@ -216,9 +216,9 @@ class Main2:
                             travel_time = 100
                             if (self.AR_curr == (Home*10) + 1):
                                 travel_time = 20 #check on this
-                            # for i in range(travel_time):
-                            #     move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
-                            #     self.execute_command(move_cmd)
+                            for i in range(travel_time):
+                                move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
+                                self.execute_command(move_cmd)
                             self.AR_curr = (self.AR_curr- 1) / 10
                             orienting = True
                 if (self.AR_seen and self.ar_z < 1.5):
