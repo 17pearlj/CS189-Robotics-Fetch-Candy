@@ -229,8 +229,31 @@ class Main2:
             
             if (self.state == "go_to_AR"): 
                 # parking the robot
-                print "going to ar"
-                
+                self.state2 = SEARCHING
+                park_check = self.park()
+                # only continue with main run sequence if parking was succesful
+                if park_check == -1:
+                    print "parking unsuccesful - going back to go to pos"
+                    self.AR_seen = False
+                    self.state = 'go_to_pos'
+                else:
+                    # return from handle ar!
+                    print "parking succesful"
+                    self.AR_seen = False
+                    
+                    if (self.AR_curr is not Home):
+                        if (self.AR_curr == 6 or self.AR_curr == 5):
+                            self.AR_curr = (Home * 10) + 1
+                        else:
+                            self.AR_curr = Home
+                        self.prev_state = 'go_to_AR'
+                        self.state = 'go_to_pos'
+                    else:
+                        self.AR_curr = -1
+                        self.prev_state = 'go_to_AR'
+                        self.state = 'wait'
+                    self.cmd_vel.publish(move_cmd)
+                    self.rate.sleep()
             # self.sounds.publish(Sound.ON)
                 
             
