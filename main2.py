@@ -197,14 +197,7 @@ class Main2:
                 orienting = True 
                 print self.ar_z
 
-                #keep track of past_xs so robot knows whether it is actually seeing the ARTag
-                past_xs.append(self.ar_x)
-                test_count+=1
                 
-
-                # checks that the last 10 updates of self.ar_x are different from each other
-                if cm.valid_list(past_xs, 10) == True:
-                    self.AR_seen_real = True
 
                 while (not(self.AR_seen)):
                     while (orienting):
@@ -240,12 +233,22 @@ class Main2:
                             
                         else: 
                             print "check 4"
+                            
+                            #keep track of past_xs so robot knows whether it is actually seeing the ARTag
+                            past_xs.append(self.ar_x)
+                            test_count+=1
+                
+
+                            # checks that the last 10 updates of self.ar_x are different from each other
+                            if cm.valid_list(past_xs, 10) == True:
+                                self.AR_seen_real = True
                             print str(test_count) + " " + str(self.ar_x)
+                            
                             move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
                             self.execute_command(move_cmd)
                 if (self.AR_seen and self.AR_seen_real):
                     print "AR seen for real!!!"
-                    print found_AR_real
+                    print self.AR_seen_real
                     self.sounds.publish(Sound.ON)
                     self.prev_state = 'go_to_pos'
                     self.state = 'go_to_AR'
@@ -386,6 +389,7 @@ class Main2:
                     # if the ARTag has been lost for too long, 
                     # return that parking was unsuccesful
                     if rospy.Time.now() - lost_timer > rospy.Duration(5):
+                        self.AR_seen_real = False
                         print "cant find tag, going to return!"
                         return -1
 
