@@ -175,7 +175,7 @@ class Main2:
                 rospy.sleep(sec)
                 self.state = self.prev_state
                 self.prev_state = 'avoid_obstacle'
-                
+
             move_cmd = Twist()
             while (self.state == 'wait'):
                 # just wait around 
@@ -193,17 +193,19 @@ class Main2:
                         pos = self.AR_ids[self.AR_curr]
                         dest_orientation = cm.orient(self.mapper.positionToMap(self.position), pos)
                         angle_dif = cm.angle_compare(self.orientation, dest_orientation)
-                        if (abs(float(angle_dif)) < abs(math.radians(5))):
+                        if (abs(float(angle_dif)) < abs(math.radians(5)) and self.state is not "bumped"):
                             move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
-
+                            print "check1"
                             orienting = False
                             self.execute_command(move_cmd)
                         else:
                             # Turn in the relevant direction
                             if angle_dif < 0:
+                                print "check2"
                                 move_cmd = self.mover.go_to_pos("left", self.position, self.orientation)
                             else:
                                 move_cmd = self.mover.go_to_pos("right", self.position, self.orientation)
+                                print "check3"
                             self.cmd_vel.publish(move_cmd)
                             self.rate.sleep()
                     else:
@@ -218,6 +220,7 @@ class Main2:
                             orienting = True
                             
                         else: 
+                            print "check 4"
                             move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
                             self.execute_command(move_cmd)
                 if (self.AR_seen and self.ar_z < 1.5):
