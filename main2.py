@@ -314,6 +314,7 @@ class Main2:
 
         while not rospy.is_shutdown(): 
             while self.state is not "bumped" or self.state is not "avoid_obstacle":
+
                 # only begin parking when the ARTag has been 
                 # located and saved in markers dictionary
                 if self.state2 is SEARCHING and len(self.markers) > 0:
@@ -349,7 +350,7 @@ class Main2:
                     
                     # if the ARTag has been lost for too long, 
                     # return that parking was unsuccesful
-                    elif rospy.Time.now() - lost_timer > rospy.Duration(10):
+                    if rospy.Time.now() - lost_timer > rospy.Duration(10):
                         print "cant find tag, going to return!"
                         return -1
 
@@ -373,8 +374,11 @@ class Main2:
                     # keep track of whether the ARTag is still in view or is lost
                     past_xs.append(self.ar_x)
                     if any(sum(1 for _ in g) > MAX_LOST_TAGS for _, g in groupby(past_xs)):
-                        self.state2 = SEARCHING_2
+                        print "lost_timer 0" + str(lost_timer)
                         lost_timer = rospy.Time.now() # track how long the ARTag has been lost 
+                        print  "lost_timer 1" + str(lost_timer)
+                        self.state2 = SEARCHING_2
+                        
                     
                     # turn until ar_x is almost 0
                     elif abs(self.ar_x) > X_ACC:
