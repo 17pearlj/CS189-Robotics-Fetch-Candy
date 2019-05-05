@@ -360,7 +360,5 @@ if __name__ == '__main__':
 #                     print("degrees alpha: %.2f" % degrees(alpha))
 #                     print("regular alpha: %.2f" % alpha)
 
-hello = [2, 4, 5]
-print hello
-del hello [:]
-print hello
+state = 1
+print state  - 1

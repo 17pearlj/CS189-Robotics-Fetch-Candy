@@ -125,3 +125,14 @@ def get_angle_ab(a, b, c):
             return -1000
     else:
             return -1000
+
+def prop_k_rot(radians_letf):
+    """
+    allows the robot to increase its angular velocity when it is turning a small angle 
+    """
+    k_rot = 2.5
+    if abs(radians_left)*k_rot < 0.05:
+        k_rot = k_rot * 2
+    
+    return k_rot
+    
