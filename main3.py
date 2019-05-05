@@ -601,7 +601,7 @@ class Main2:
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data)
 
-            mask = cv2.inRange(cv_image, 0.1, .3)
+            mask = cv2.inRange(cv_image, 0.1, .5)
             mask[:, 0:140] = 0
             mask[:, 500:] = 0
             # create a mask to restrict the depth that can be seen 
