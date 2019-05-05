@@ -141,10 +141,10 @@ def valid_list(my_list, num):
     """
     returns True if the last num numbers in a list are different 
     """
-    if num > len(my_list) + 1:
-        num = len(my_list) + 1
+    if num > len(my_list):
+        num = len(my_list) - 1
     my_sum = sum( my_list[-num: len(my_list) + 1])
-    avg = my_sum/num
+    avg = my_sum/len(my_list)
     # list is not valid - not made of values that are being updated 
     if avg == my_list[-1]:
         return False

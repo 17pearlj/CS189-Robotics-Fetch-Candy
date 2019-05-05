@@ -361,19 +361,38 @@ if __name__ == '__main__':
 #                     print("degrees alpha: %.2f" % degrees(alpha))
 #                     print("regular alpha: %.2f" % alpha)
 
-def check_list(my_list, num):
+def valid_list1(my_list, num):
     """
-    returns True if the last num numbers in a list are the same 
+    returns True if the last num numbers in a list are different 
     """
+    if num > len(my_list) + 1:
+        help_list_sz = num - len(my_list)
+        help_list = [0] * help_list_sz
+        my_list = help_list + my_list
     my_sum = sum( my_list[-num: len(my_list) + 1])
-    avg = my_sum/num
+    avg = my_sum/len(my_list)
+    # list is not valid - not made of values that are being updated 
     if avg == my_list[-1]:
-        return True
-    else:
         return False
+    else:
+        return True
+
+def valid_list(my_list, num):
+    """
+    returns True if the last num numbers in a list are different 
+    """
+    if num > len(my_list):
+        num = len(my_list) - 1
+    my_sum = sum( my_list[-num: len(my_list) + 1])
+    avg = my_sum/len(my_list)
+    # list is not valid - not made of values that are being updated 
+    if avg == my_list[-1]:
+        return False
+    else:
+        return True
 
 
-a_list = numpy.linspace(1, 1.0000000000005)
-b_list = [1,1,1,1,1,1,1,1]
-print a_list
-print check_list(b_list, 5)
+a_list = list(numpy.linspace(1, 1.005))
+b_list = [1,1,1]
+# print a_list
+print valid_list(a_list, 52)
