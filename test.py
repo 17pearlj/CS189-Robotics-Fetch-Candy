@@ -1,5 +1,6 @@
 import cool_math as cm
 import math
+import numpy
 
 if __name__ == '__main__':
     h = [0,1,2,3,4]
@@ -360,5 +361,19 @@ if __name__ == '__main__':
 #                     print("degrees alpha: %.2f" % degrees(alpha))
 #                     print("regular alpha: %.2f" % alpha)
 
-state = 1
-print state  - 1
+def check_list(my_list, num):
+    """
+    returns True if the last num numbers in a list are the same 
+    """
+    my_sum = sum( my_list[-num: len(my_list) + 1])
+    avg = my_sum/num
+    if avg == my_list[-1]:
+        return True
+    else:
+        return False
+
+
+a_list = numpy.linspace(1, 1.0000000000005)
+b_list = [1,1,1,1,1,1,1,1]
+print a_list
+print check_list(b_list, 5)

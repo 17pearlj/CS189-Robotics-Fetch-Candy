@@ -98,6 +98,7 @@ class Main2:
         self.close = False # if there's an obstacle and we are really close to the ar_tag, it's probably another robot
         self.close_VERY = False # if we are extremely close to the ar_tag, we are just going to park or get bumped
         self.AR_seen = False
+        self.AR_seen_real = False
             
         # # ---- rospy stuff ----
         # Initialize the node
@@ -199,13 +200,11 @@ class Main2:
                 #keep track of past_xs so robot knows whether it is actually seeing the ARTag
                 past_xs.append(self.ar_x)
                 test_count+=1
-                print str(test_count) + " " + str(self.ar_x)
+                
 
                 # checks that the last 10 updates of self.ar_x are different from each other
-                if not any(sum(1 for _ in g) > 10 for _, g in groupby(past_xs)):
-                    found_AR_real = True
-
-                
+                if cm.valid_list(past_xs, 10) == True:
+                    self.AR_seen_real = True
 
                 while (not(self.AR_seen)):
                     while (orienting):
@@ -241,10 +240,11 @@ class Main2:
                             
                         else: 
                             print "check 4"
+                            print str(test_count) + " " + str(self.ar_x)
                             move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
                             self.execute_command(move_cmd)
-                if (self.AR_seen and found_AR_real):
-                    print "see AR"
+                if (self.AR_seen and self.AR_seen_real):
+                    print "AR seen for real!!!"
                     print found_AR_real
                     self.sounds.publish(Sound.ON)
                     self.prev_state = 'go_to_pos'
@@ -377,7 +377,7 @@ class Main2:
                     # if ar_x is being updated, then ARTag has been found, 
                     # return to parking TODO: update this name
                     if len(past_xs) > MIN_FOUND_TAGS:
-                        if not any(sum(1 for _ in g) > MAX_LOST_TAGS*0.5 for _, g in groupby(past_xs)):
+                        if cm.valid_list(past_xs, 5):
                             print "found tag again!"
                             osc_count = 0 # clear counter for oscillations
                             del past_xs [:] # clear list of past ar_xs
@@ -408,15 +408,15 @@ class Main2:
 
                     # keep track of whether the ARTag is still in view or is lost
                     past_xs.append(self.ar_x)
-                    if any(sum(1 for _ in g) > MAX_LOST_TAGS for _, g in groupby(past_xs)):
+                    if not cm.valid_list(past_xs, 10):
                         lost_timer = rospy.Time.now() # track how long the ARTag has been lost 
+                        del past_xs [:] # clear list of past ar_xs
                         self.state2 = SEARCHING_2
                         
-                    
                     # turn until ar_x is almost 0
                     elif abs(self.ar_x) > X_ACC:
                         ang_velocity = -self.ar_x * cm.prop_k_rot(self.ar_x)
-                        print "velocity in x" + str(ang_velocity)
+                        print "velocity in x " + str(ang_velocity)
                         self.execute_command(self.mover.twist(ang_velocity))
                     
                     # triangulate distances and angles to guide 
@@ -500,12 +500,12 @@ class Main2:
                         print "ar_x" + str(self.ar_x)
                         del past_pos [:] # clear list of past positions
                         
-                        # check if the ARTag data is valid before zeroing x
-                        if any(sum(1 for _ in g) > MAX_LOST_TAGS*2 for _, g in groupby(past_xs)):
-                            lost_timer = rospy.Time.now() # track how long the ARTag has been lost 
-                            self.state2 = SEARCHING_2
-                        # now zero ar_x 
-                        elif abs(self.ar_x) > X_ACC:
+                        # # check if the ARTag data is valid before zeroing x
+                        # if any(sum(1 for _ in g) > MAX_LOST_TAGS*2 for _, g in groupby(past_xs)):
+                        #     lost_timer = rospy.Time.now() # track how long the ARTag has been lost 
+                        #     self.state2 = SEARCHING_2
+                        # # now zero ar_x 
+                        if abs(self.ar_x) > X_ACC:
                             self.state2 = ZERO_X
                             almost_perfet = True
                         else:

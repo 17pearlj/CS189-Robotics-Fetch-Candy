@@ -126,7 +126,7 @@ def get_angle_ab(a, b, c):
     else:
             return -1000
 
-def prop_k_rot(radians_left):
+def prop_k_rot(radians_letf):
     """
     allows the robot to increase its angular velocity when it is turning a small angle 
     """
@@ -135,4 +135,18 @@ def prop_k_rot(radians_left):
         k_rot = k_rot * 2
     
     return k_rot
-    
+
+
+def valid_list(my_list, num):
+    """
+    returns True if the last num numbers in a list are different 
+    """
+    if num > len(my_list) + 1:
+        num = len(my_list) + 1
+    my_sum = sum( my_list[-num: len(my_list) + 1])
+    avg = my_sum/num
+    # list is not valid - not made of values that are being updated 
+    if avg == my_list[-1]:
+        return False
+    else:
+        return True
