@@ -75,16 +75,16 @@ class Main2:
         self.AR_curr = -1
         # dictionary for ar ids and coordinates
         self.AR_ids = {
-            1: (0, 17), 
-            11: (15, 18),
-            2: (4, 24),
-            3: (45, 24),
-            4: (31, 10), 
-            51: (35, 18), #fake location to get around table
-            5: (23, 10),
-            61: (35, 18), #fake location to get around table
-            6: (23, 8),
-            7: (9, 5)
+            1: [(0, 17),  2],
+            11: [(15, 18), -5],
+            2: [(4, 24), 1],
+            3: [(45, 24), 1],
+            4: [(31, 10), 0],
+            51: [(35, 18), -5], #fake location to get around table
+            5: [(23, 10), -1],
+            61: [(35, 18), -5], #fake location to get around table
+            6: [(23, 8), 2],
+            7: [(9, 5), -1]
         } 
 
         # vector orientation of ARTag relative to robot 
@@ -154,8 +154,9 @@ class Main2:
         self.AR_curr = int(sys.argv[1])
         if (self.AR_curr == 5 or self.AR_curr == 6):
             self.AR_curr = self.AR_curr*10 + 1
-        self.execute_command(self.mover.back_out())
+        
         while not rospy.is_shutdown():
+            print "orientation: %d" % self.orientation
             move_cmd = Twist()
             if (self.state is "bumped" or self.state is "avoid_obstacle"):
                 print "HI"
@@ -170,7 +171,7 @@ class Main2:
                     sec = 15
                 elif (self.close == False):
                     print "obstacle, not close to ar tag"
-                    sec = 2
+                    sec = 5
                 else:
                     print "obstacle, moderately close to ar tag"
                     sec = 5
@@ -193,7 +194,7 @@ class Main2:
                 print self.ar_z
                 if (not(self.AR_seen) or self.ar_z >= 1.5):
                     if (orienting):
-                        pos = self.AR_ids[self.AR_curr]
+                        pos = self.AR_ids[self.AR_curr][0]
                         dest_orientation = cm.orient(self.mapper.positionToMap(self.position), pos)
                         angle_dif = cm.angle_compare(self.orientation, dest_orientation)
                         if (abs(float(angle_dif)) < abs(math.radians(5)) and self.state is not "bumped"):
@@ -519,10 +520,18 @@ class Main2:
 
                 # back out from the ARTag
                 elif self.state2 == BACK_OUT:  
-                    print "in back out"
-                    self.execute_command(self.mover.back_out())
-                    if self.ar_z > CLOSE_DIST*3:
-                        # set parameters for avoiding obstacles
+                    if (self.AR_curr is not Home):
+                        print "in back out"
+                        self.position = self.mapper.positionFromMap(self.AR_ids[self.AR_curr][0])
+                        self.orientation = radians(self.AR_ids[self.AR_curr][1] * 90)
+                        print "my position %s" % str(self.mapper.positionToMap(self.position)) 
+                        print "my orientation %d" % self.orientation                    
+                        self.execute_command(self.mover.back_out())
+                        if self.ar_z > CLOSE_DIST*3:
+                            # set parameters for avoiding obstacles
+                            self.close_VERY = False
+                            self.state2 = DONE_PARKING
+                    else: 
                         self.close_VERY = False
                         self.state2 = DONE_PARKING
 
