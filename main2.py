@@ -43,6 +43,8 @@ BACK_OUT = 6
 DONE_PARKING = 7
 SEARCHING_2 = -1
 
+
+
 class Main2:
     def __init__(self):
         # information about the robot's current position and orientation relative to start
@@ -150,6 +152,8 @@ class Main2:
         :return: None
         """
         past_xs = []
+        test_count = 0
+
         self.AR_curr = int(sys.argv[1])
         if (self.AR_curr == 5 or self.AR_curr == 6):
             self.AR_curr = self.AR_curr*10 + 1
@@ -194,11 +198,16 @@ class Main2:
 
                 #keep track of past_xs so robot knows whether it is actually seeing the ARTag
                 past_xs.append(self.ar_x)
+                test_count+=1
+                print str(test_count) + " " + str(self.ar_x)
+
                 # checks that the last 10 updates of self.ar_x are different from each other
                 if not any(sum(1 for _ in g) > 10 for _, g in groupby(past_xs)):
                     found_AR_real = True
 
-                while (not(self.AR_seen) or self.ar_z >= 1.5):
+                
+
+                while (not(self.AR_seen)):
                     while (orienting):
 
                         pos = self.AR_ids[self.AR_curr]
@@ -298,7 +307,7 @@ class Main2:
         # goal distance between robot and ARTag before perfect parking 
         LL_DIST = 0.5 # m
         # distance between ARTag and robot when robot is almost touching it 
-        CLOSE_DIST = 0.28 # m
+        CLOSE_DIST = 0.24 # m
         # desired accuracy when zeroing in on ARTag 
         X_ACC = 0.07 # m
         # parameters for limiting robots movement
@@ -442,11 +451,13 @@ class Main2:
                         # keep track of how much robot has turned 
                         # since it entered 'alpha' state
                         past_orr.append(self.orientation)
-                        dif =  abs(self.orientation - past_orr[0])
+                        dif2 =  abs(self.orientation - past_orr[0])
+                        dif = cm.angle_compare(self.orientation, past_orr[0])
                         rad2go = abs(alpha) - abs(dif)
 
-                        print "dif" + str(degrees(dif))
-                        print "alpha" + degrees(alpha)
+                        print "dif " + str(degrees(dif))
+                        print "alpha " + str(degrees(alpha))
+                        print "rad2go " + str(degrees(rad2go))
                         
 
                         # want to always turn away from the ARTag until 
