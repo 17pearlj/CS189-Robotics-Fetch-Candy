@@ -167,12 +167,12 @@ class Main2:
                 orienting = True 
                 while (not(self.AR_seen)):
                     while (orienting):
+
                         pos = self.AR_ids[self.AR_curr]
                         dest_orientation = cm.orient(self.mapper.positionToMap(self.position), pos)
                         angle_dif = cm.angle_compare(self.orientation, dest_orientation)
                         if (abs(float(angle_dif)) < abs(math.radians(5))):
                             move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
-                            self.execute_command(move_cmd)
                             orienting = False
                             
                         else:
@@ -196,8 +196,7 @@ class Main2:
                             
                         else: 
                             move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
-                            self.cmd_vel.publish(move_cmd)
-                            self.rate.sleep()
+                            self.execute_command(move_cmd)
                 if (self.AR_seen):
                     print "see AR"
                     self.sounds.publish(Sound.ON)
@@ -262,7 +261,7 @@ class Main2:
         :param: a move command with linear and angular velocity set, see move_scipt.py
         :return: None
         """
-        while (self.state is not "bumped" or self.state is not "avoid_obstacle"):
+        if (self.state is not "bumped" or self.state is not "avoid_obstacle"):
             move_cmd = my_move
             self.cmd_vel.publish(move_cmd)
             self.rate.sleep()
