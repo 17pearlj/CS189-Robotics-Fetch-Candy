@@ -155,6 +155,7 @@ class Main2:
         while not rospy.is_shutdown():
             # print "my position %s" % str(self.mapper.positionToMap(self.position)) 
             if (self.state == "avoid_obstacle" or self.state == "bumped"):
+                self.execute_command(self.mover.stop())
                 self.sounds.publish(Sound.ON)
                 print "OBSTACLE OR BUMP"
                 sec = 0
@@ -173,8 +174,9 @@ class Main2:
                     print "obstacle, moderately close to ar tag"
                     sec = 5
                 rospy.sleep(sec)
-                self.state = self.prev_state
                 self.prev_state = 'avoid_obstacle'
+                self.state = self.prev_state
+                
 
             move_cmd = Twist()
             while (self.state == 'wait'):
@@ -267,10 +269,14 @@ class Main2:
         :param: a move command with linear and angular velocity set, see move_scipt.py
         :return: None
         """
-        while (self.state is not "bumped" or self.state is not "avoid_obstacle"):
+        if (self.state is not "bumped" or self.state is not "avoid_obstacle"):
             move_cmd = my_move
             self.cmd_vel.publish(move_cmd)
             self.rate.sleep()
+        else:
+            self.self.cmd_vel.publish(self.mover.stop())
+            self.rate.sleep()
+
 
     def park(self):
         """
@@ -654,9 +660,10 @@ class Main2:
         """
         if (data.state == BumperEvent.PRESSED):
             print "BUMP"
-            self.execute_command(self.mover.stop())
+            
             self.prev_state = self.state
             self.state = 'bumped'
+            
             print self.state
 
     def shutdown(self):
