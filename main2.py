@@ -155,7 +155,7 @@ class Main2:
         while not rospy.is_shutdown():
             print "my position %s" % str(self.mapper.positionToMap(self.position)) 
             move_cmd = Twist()
-            while(self.state is not 'avoid_obstacle' or self.state is not 'bumped'):
+            while self.state is not 'avoid_obstacle' or self.state is not 'bumped':
                 while (self.state == 'wait'):
                     # just wait around 
                     move_cmd = self.mover.wait()
@@ -168,15 +168,11 @@ class Main2:
                     orienting = True 
                     while (not(self.AR_seen) or self.ar_z >= 1.5):
                         while (orienting):
-                            print "orienting"
                             pos = self.AR_ids[self.AR_curr]
-                            print "pos %s" % str(pos)
                             dest_orientation = cm.orient(self.mapper.positionToMap(self.position), pos)
-                            print "my position %s" % str(self.mapper.positionToMap(self.position))
                             angle_dif = cm.angle_compare(self.orientation, dest_orientation)
                             if (abs(float(angle_dif)) < abs(math.radians(5))):
                                 move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
-                                print "forward"
                                 orienting = False
                                 
                             else:
@@ -200,7 +196,6 @@ class Main2:
                                 
                             else: 
                                 move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
-                                print "forward"
                                 self.cmd_vel.publish(move_cmd)
                                 self.rate.sleep()
                     if (self.AR_seen and self.ar_z < 1.5):

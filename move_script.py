@@ -86,11 +86,9 @@ class MoveMaker:
             self.move_cmd.angular.z = 0
             self.move_cmd.linear.x = LIN_SPEED * 2
         elif (str == 'left'):
-            print "lleft"
             self.move_cmd.angular.z = ROT_SPEED_2
             self.move_cmd.linear.x = 0
         elif (str == 'right'):
-            print "rright"
             self.move_cmd.angular.z = -ROT_SPEED_2
             self.move_cmd.linear.x = 0
         return self.move_cmd
