@@ -76,7 +76,7 @@ class Main2:
             11: (15, 18),
             2: (4, 24),
             3: (45, 24),
-            4: (31, 14), 
+            4: (31, 10), 
             51: (35, 18), #fake location to get around table
             5: (23, 10),
             61: (35, 18), #fake location to get around table
@@ -153,7 +153,7 @@ class Main2:
         if (self.AR_curr == 5 or self.AR_curr == 6):
             self.AR_curr = self.AR_curr*10 + 1
         while not rospy.is_shutdown():
-            print "my position %s" % str(self.mapper.positionToMap(self.position)) 
+            # print "my position %s" % str(self.mapper.positionToMap(self.position)) 
             move_cmd = Twist()
             while (self.state == 'wait'):
                 # just wait around 
@@ -165,7 +165,7 @@ class Main2:
 
             if (self.state == 'go_to_pos'):
                 orienting = True 
-                while (not(self.AR_seen) and self.ar_z >= 1.5):
+                while (not(self.AR_seen) or self.ar_z >= 1.5):
                     while (orienting):
 
                         pos = self.AR_ids[self.AR_curr]
@@ -173,8 +173,9 @@ class Main2:
                         angle_dif = cm.angle_compare(self.orientation, dest_orientation)
                         if (abs(float(angle_dif)) < abs(math.radians(5))):
                             move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
+
                             orienting = False
-                            
+                            self.execute_command(move_cmd)
                         else:
                             # Turn in the relevant direction
                             if angle_dif < 0:
@@ -203,7 +204,7 @@ class Main2:
                     self.prev_state = 'go_to_pos'
                     self.state = 'go_to_AR'
             
-            elif (self.state == "go_to_AR"): 
+            if (self.state == "go_to_AR"): 
                 # parking the robot
                 self.state2 = SEARCHING
                 park_check = self.park()
@@ -232,7 +233,7 @@ class Main2:
                     self.rate.sleep()
             # self.sounds.publish(Sound.ON)
                 
-            elif (self.state == "avoid_obstacle" or self.state == "bumped"):
+            if (self.state == "avoid_obstacle" or self.state == "bumped"):
                 self.sounds.publish(Sound.ON)
                 print "OBSTACLE OR BUMP"
                 sec = 0
@@ -261,7 +262,7 @@ class Main2:
         :param: a move command with linear and angular velocity set, see move_scipt.py
         :return: None
         """
-        if (self.state is not "bumped" or self.state is not "avoid_obstacle"):
+        while (self.state is not "bumped" or self.state is not "avoid_obstacle"):
             move_cmd = my_move
             self.cmd_vel.publish(move_cmd)
             self.rate.sleep()
