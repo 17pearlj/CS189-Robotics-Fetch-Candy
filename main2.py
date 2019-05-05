@@ -165,7 +165,7 @@ class Main2:
 
             if (self.state == 'go_to_pos'):
                 orienting = True 
-                while (not(self.AR_seen) and self.ar_z >= 1.5):
+                while (not(self.AR_seen) or self.ar_z >= 1.5):
                     while (orienting):
 
                         pos = self.AR_ids[self.AR_curr]
