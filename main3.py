@@ -189,7 +189,42 @@ class Main2:
             if (self.state == 'go_to_pos'):
                 orienting = True 
                 print self.ar_z
-                
+                while (not(self.AR_seen) or self.ar_z >= 1.5):
+                    while (orienting):
+                        pos = self.AR_ids[self.AR_curr]
+                        dest_orientation = cm.orient(self.mapper.positionToMap(self.position), pos)
+                        angle_dif = cm.angle_compare(self.orientation, dest_orientation)
+                        if (abs(float(angle_dif)) < abs(math.radians(5)) and self.state is not "bumped"):
+                            move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
+                            print "forward 1"
+                            orienting = False
+                            # self.execute_command(move_cmd)
+                        else:
+                            # Turn in the relevant direction
+                            if angle_dif < 0:
+                                print "left"
+                                move_cmd = self.mover.go_to_pos("left", self.position, self.orientation)
+                            else:
+                                move_cmd = self.mover.go_to_pos("right", self.position, self.orientation)
+                                print "right"
+                            # self.cmd_vel.publish(move_cmd)
+                            # self.rate.sleep()
+                    if (not orienting):
+                        if ((self.AR_curr > 10)):
+                            print "big ar tag"
+                            travel_time = 100
+                            if (self.AR_curr == (Home*10) + 1):
+                                travel_time = 20 #check on this
+                            # for i in range(travel_time):
+                            #     move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
+                            #     self.execute_command(move_cmd)
+                            self.AR_curr = (self.AR_curr- 1) / 10
+                            orienting = True
+                if (self.AR_seen and self.ar_z < 1.5):
+                    print "see AR"
+                    self.sounds.publish(Sound.ON)
+                    self.prev_state = 'go_to_pos'
+                    self.state = 'go_to_AR'
             
             if (self.state == "go_to_AR"): 
                 # parking the robot
