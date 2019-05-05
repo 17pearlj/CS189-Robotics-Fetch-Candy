@@ -31,6 +31,10 @@ from itertools import groupby
 VALID_IDS = range(18)
 Home = 1
 
+#states in 1st
+
+
+
 # states in park(); ie state2
 SEARCHING = 0
 ZERO_X = 1
@@ -152,18 +156,31 @@ class Main2:
             self.AR_curr = self.AR_curr*10 + 1
         while not rospy.is_shutdown():
             move_cmd = Twist()
-            if (self.state == "avoid_obstacle" or self.state == "bumped"):
+            if (self.state is "bumped" or self.state is "avoid_obstacle"):
                 self.sounds.publish(Sound.ON)
-                print "OBSTACLE OR BUMP"
-                self.execute_command(self.mover.stop())
-                rospy.sleep(15)
-                check = self.prev_state
-                self.prev_state = self.state
-                self.state = check
+                sec = 0
+                if (self.state == "bumped" and not self.close_VERY):
+                    print "bump when not very close to ar_tag"
+                    # we may not want it to move backward (we would be going off our path)
+                   # self.execute_command(self.mover.bumped())
+                    sec = 5
+
+                elif (self.close_VERY):
+                    print "obstacle when very close to ar_tag!!"
+                    sec = 15
+                elif (self.close == False):
+                    print "obstacle, not close to ar tag"
+                    sec = 2
+                else:
+                    print "obstacle, moderately close to ar tag"
+                    sec = 5
+                rospy.sleep(sec)
+                self.prev_state = 'avoid_obstacle'
+                self.state = "go_to_pos"
                 
 
             
-            while (self.state == 'wait'):
+            if (self.state == 'wait'):
                 # just wait around 
                 move_cmd = self.mover.wait()
                 if (self.AR_curr != -1):
@@ -171,80 +188,15 @@ class Main2:
                     self.prev_state = 'wait'
                     self.state = 'go_to_pos'
 
-            while (self.state == 'go_to_pos'):
+            if (self.state == 'go_to_pos'):
                 orienting = True 
                 print self.ar_z
-                while (not(self.AR_seen) or self.ar_z >= .5):
-                    while (orienting):
-                        pos = self.AR_ids[self.AR_curr]
-                        dest_orientation = cm.orient(self.mapper.positionToMap(self.position), pos)
-                        angle_dif = cm.angle_compare(self.orientation, dest_orientation)
-                        if (abs(float(angle_dif)) < abs(math.radians(5)) and self.state is not "bumped"):
-                            move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
-                            print "forward 1"
-                            orienting = False
-                            self.execute_command(move_cmd)
-                        else:
-                            # Turn in the relevant direction
-                            if angle_dif < 0:
-                                print "left"
-                                move_cmd = self.mover.go_to_pos("left", self.position, self.orientation)
-                            else:
-                                move_cmd = self.mover.go_to_pos("right", self.position, self.orientation)
-                                print "right"
-                            self.cmd_vel.publish(move_cmd)
-                            self.rate.sleep()
-                    else:
-                        if ((self.AR_curr > 10)):
-                            travel_time = 100
-                            if (self.AR_curr == (Home*10) + 1):
-                                travel_time = 20 #check on this
-                            for i in range(travel_time):
-                                move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
-                                self.execute_command(move_cmd)
-                            self.AR_curr = (self.AR_curr- 1) / 10
-                            orienting = True
-                            
-                        else: 
-                            print "forward"
-                            move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
-                            self.execute_command(move_cmd)
-                if (self.AR_seen and self.ar_z < .5):
-                    print "see AR"
-                    self.sounds.publish(Sound.ON)
-                    self.prev_state = 'go_to_pos'
-                    self.state = 'go_to_AR'
+                
             
-            while (self.state == "go_to_AR"): 
+            if (self.state == "go_to_AR"): 
                 # parking the robot
                 print "going to ar"
-                self.close = True
-                self.close_VERY = False
-                self.state2 = SEARCHING
-                park_check = self.park()
-                # only continue with main run sequence if parking was succesful
-                if park_check == -1:
-                    print "parking unsuccesful - going back to go to pos"
-                    self.AR_seen = False
-                    self.state = 'go_to_pos'
-                else:
-                    # return from handle ar!
-                    print "parking succesful"
-                    self.AR_seen = False
-                    
-                    if (self.AR_curr is not Home):
-                        if (self.AR_curr == 6 or self.AR_curr == 5):
-                            self.AR_curr = (Home * 10) + 1
-                        else:
-                            self.AR_curr = Home
-                        self.prev_state = 'go_to_AR'
-                        self.state = 'go_to_pos'
-                    else:
-                        self.AR_curr = -1
-                        self.prev_state = 'go_to_AR'
-                        self.state = 'wait'
-                    self.cmd_vel.publish(move_cmd)
-                    self.rate.sleep()
+                
             # self.sounds.publish(Sound.ON)
                 
             
@@ -256,13 +208,13 @@ class Main2:
         :param: a move command with linear and angular velocity set, see move_scipt.py
         :return: None
         """
+        print "self.state in exec command is:"
+        print self.state
         if (self.state is not "bumped" or self.state is not "avoid_obstacle"):
             move_cmd = my_move
             self.cmd_vel.publish(move_cmd)
             self.rate.sleep()
-        else:
-            self.self.cmd_vel.publish(self.mover.stop())
-            self.rate.sleep()
+
 
 
     def park(self):
@@ -651,7 +603,7 @@ class Main2:
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data)
 
-            mask = cv2.inRange(cv_image, 0.1, .5)
+            mask = cv2.inRange(cv_image, 0.1, .3)
             mask[:, 0:140] = 0
             mask[:, 500:] = 0
             # create a mask to restrict the depth that can be seen 
