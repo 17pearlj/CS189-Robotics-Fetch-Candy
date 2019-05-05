@@ -154,6 +154,7 @@ class Main2:
         self.AR_curr = int(sys.argv[1])
         if (self.AR_curr == 5 or self.AR_curr == 6):
             self.AR_curr = self.AR_curr*10 + 1
+        self.execute_command(self.mover.back_out())
         while not rospy.is_shutdown():
             move_cmd = Twist()
             if (self.state is "bumped" or self.state is "avoid_obstacle"):
@@ -602,7 +603,7 @@ class Main2:
         self.position = (pos.x + extra_pos[0], pos.y + extra_pos[1])
         orientation = data.pose.pose.orientation
         list_orientation = [orientation.x, orientation.y, orientation.z, orientation.w]
-        self.orientation = tf.transformations.euler_from_quaternion(list_orientation)[-1] + extra_or
+        self.orientation = tf.transformations.euler_from_quaternion(list_orientation)[-1] - radians(180)
 
 
     #   OBSTACLE TWEAKING: the range of obstacle depth detected, the width of camera, area of obstacle      
@@ -641,6 +642,7 @@ class Main2:
             if (w*h > 400):
                 if (self.close_VERY == False):
                     print "avoiding obstacle"
+                    self.execute_command(self.mover.stop())
                     self.prev_state = self.state
                     self.state = 'avoid_obstacle'
  
