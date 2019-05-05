@@ -157,6 +157,7 @@ class Main2:
         while not rospy.is_shutdown():
             move_cmd = Twist()
             if (self.state is "bumped" or self.state is "avoid_obstacle"):
+                print "HI"
                 self.sounds.publish(Sound.ON)
                 sec = 0
                 if (self.state == "bumped" and not self.close_VERY):
@@ -189,8 +190,8 @@ class Main2:
             if (self.state == 'go_to_pos'):
                 orienting = True 
                 print self.ar_z
-                while (not(self.AR_seen) or self.ar_z >= 1.5):
-                    while (orienting):
+                if (not(self.AR_seen) or self.ar_z >= 1.5):
+                    if (orienting):
                         pos = self.AR_ids[self.AR_curr]
                         dest_orientation = cm.orient(self.mapper.positionToMap(self.position), pos)
                         angle_dif = cm.angle_compare(self.orientation, dest_orientation)
@@ -198,7 +199,7 @@ class Main2:
                             move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
                             print "forward 1"
                             orienting = False
-                            # self.execute_command(move_cmd)
+                            #self.execute_command(move_cmd)
                         else:
                             # Turn in the relevant direction
                             if angle_dif < 0:
@@ -207,8 +208,8 @@ class Main2:
                             else:
                                 move_cmd = self.mover.go_to_pos("right", self.position, self.orientation)
                                 print "right"
-                            # self.cmd_vel.publish(move_cmd)
-                            # self.rate.sleep()
+                            self.execute_command(move_cmd)
+                            
                     if (not orienting):
                         if ((self.AR_curr > 10)):
                             print "big ar tag"
