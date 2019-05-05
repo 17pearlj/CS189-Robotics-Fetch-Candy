@@ -323,7 +323,7 @@ class Main2:
             # only begin parking when the ARTag has been 
             # located and saved in markers dictionary
             if self.state2 is SEARCHING and len(self.markers) > 0:
-                print self.state2
+                print "in SEARCHING"
 
                 # used to decide what side of the robot the ARTag is on
                 theta_org = self.ar_orientation
@@ -337,7 +337,7 @@ class Main2:
             # handle event of ARTag being lost while parking sequence goes on
             # this has high priority over other states
             elif self.state2 is SEARCHING_2:
-                print self.state2
+                print "in SEARCHING 2 - ar tag lost"
 
                 # keep track of ar_x, which would only 
                 # be updated when ARTag is in view
@@ -371,7 +371,7 @@ class Main2:
 
             # turn to face the ARTag 
             if self.state2 is ZERO_X:
-                print self.state2
+                print "in zero x"
 
                 # keep track of whether the ARTag is still in view or is lost
                 past_xs.append(self.ar_x)
@@ -393,7 +393,7 @@ class Main2:
 
             # turn away from AR_TAG by a small angle alpha
             elif self.state2 is TURN_ALPHA:
-                print self.state2 
+                print "in turn alpha"
 
                 # if robot is already close to ARTag, it should just park  
                 if self.ar_z <= CLOSE_DIST*2: 
@@ -429,7 +429,7 @@ class Main2:
 
             # move to a position that makes parking convenient
             elif self.state2 == MOVE_ALPHA:
-                print self.state2
+                print "in move alpha"
 
                 # keep track of how far robot has moved since it entered 'MOVE_ALPHA'
                 past_pos.append(self.position)
@@ -451,7 +451,7 @@ class Main2:
 
             # move in a straight line to the ar tag 
             elif self.state2 == MOVE_PERF:
-                print self.state2
+                print "in move perf"
 
                 # check that robot is facing the ARTag
                 if abs(self.ar_x) > X_ACC*3:
@@ -470,7 +470,7 @@ class Main2:
 
             # wait to recieve package 
             elif self.state2 == SLEEPING:
-                print self.state2
+                print "in sleeping"
                 sleep_count+=1
                 rospy.sleep(1)
                 if sleep_count > SLEEP_TIME:
@@ -479,7 +479,7 @@ class Main2:
 
             # back out from the ARTag
             elif self.state2 == BACK_OUT:  
-                print self.state2
+                print "in back out"
                 self.execute_command(self.mover.back_out())
                 if self.ar_z > CLOSE_DIST*3:
                     # set parameters for avoiding obstacles
@@ -489,7 +489,7 @@ class Main2:
 
             # done with the parking sequence!
             elif self.state2 == DONE_PARKING:
-                print self.state2
+                print "in done parking"
                 self.execute_command(self.mover.stop())
                 # return succesful parking 
                 return 0
