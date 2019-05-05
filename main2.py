@@ -165,7 +165,7 @@ class Main2:
 
             if (self.state == 'go_to_pos'):
                 orienting = True 
-                while (not(self.AR_seen)):
+                while (not(self.AR_seen) and self.ar_z >= 1.5):
                     while (orienting):
 
                         pos = self.AR_ids[self.AR_curr]
@@ -197,7 +197,7 @@ class Main2:
                         else: 
                             move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
                             self.execute_command(move_cmd)
-                if (self.AR_seen):
+                if (self.AR_seen and self.ar_z < 1.5):
                     print "see AR"
                     self.sounds.publish(Sound.ON)
                     self.prev_state = 'go_to_pos'
@@ -288,7 +288,7 @@ class Main2:
         OSC_LIM = 20
 
         # theshold for losing and finding the ARTag
-        MAX_LOST_TAGS = 10
+        MAX_LOST_TAGS = 5
         MIN_FOUND_TAGS = 3
 
         # constants of proportionaly for setting speeds
