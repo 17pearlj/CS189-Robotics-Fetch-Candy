@@ -654,6 +654,7 @@ class Main2:
         """
         if (data.state == BumperEvent.PRESSED):
             print "BUMP"
+            self.execute_command(self.mover.stop())
             self.prev_state = self.state
             self.state = 'bumped'
             print self.state
