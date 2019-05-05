@@ -155,86 +155,85 @@ class Main2:
         while not rospy.is_shutdown():
             print "my position %s" % str(self.mapper.positionToMap(self.position)) 
             move_cmd = Twist()
-            while self.state is not 'avoid_obstacle' or self.state is not 'bumped':
-                while (self.state == 'wait'):
-                    # just wait around 
-                    move_cmd = self.mover.wait()
-                    if (self.AR_curr != -1):
-                        print "changing state to go_to_pos"
-                        self.prev_state = 'wait'
-                        self.state = 'go_to_pos'
+            while (self.state == 'wait'):
+                # just wait around 
+                move_cmd = self.mover.wait()
+                if (self.AR_curr != -1):
+                    print "changing state to go_to_pos"
+                    self.prev_state = 'wait'
+                    self.state = 'go_to_pos'
 
-                if (self.state == 'go_to_pos'):
-                    orienting = True 
-                    while (not(self.AR_seen) or self.ar_z >= 1.5):
-                        while (orienting):
-                            pos = self.AR_ids[self.AR_curr]
-                            dest_orientation = cm.orient(self.mapper.positionToMap(self.position), pos)
-                            angle_dif = cm.angle_compare(self.orientation, dest_orientation)
-                            if (abs(float(angle_dif)) < abs(math.radians(5))):
+            if (self.state == 'go_to_pos'):
+                orienting = True 
+                while (not(self.AR_seen)):
+                    while (orienting):
+                        pos = self.AR_ids[self.AR_curr]
+                        dest_orientation = cm.orient(self.mapper.positionToMap(self.position), pos)
+                        angle_dif = cm.angle_compare(self.orientation, dest_orientation)
+                        if (abs(float(angle_dif)) < abs(math.radians(5))):
+                            move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
+                            self.execute_command(move_cmd)
+                            orienting = False
+                            
+                        else:
+                            # Turn in the relevant direction
+                            if angle_dif < 0:
+                                move_cmd = self.mover.go_to_pos("left", self.position, self.orientation)
+                            else:
+                                move_cmd = self.mover.go_to_pos("right", self.position, self.orientation)
+                            self.cmd_vel.publish(move_cmd)
+                            self.rate.sleep()
+                    else:
+                        if ((self.AR_curr > 10)):
+                            travel_time = 100
+                            if (self.AR_curr == (Home*10) + 1):
+                                travel_time = 20 #check on this
+                            for i in range(travel_time):
                                 move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
                                 self.execute_command(move_cmd)
-                                orienting = False
-                                
-                            else:
-                                # Turn in the relevant direction
-                                if angle_dif < 0:
-                                    move_cmd = self.mover.go_to_pos("left", self.position, self.orientation)
-                                else:
-                                    move_cmd = self.mover.go_to_pos("right", self.position, self.orientation)
-                                self.cmd_vel.publish(move_cmd)
-                                self.rate.sleep()
+                            self.AR_curr = (self.AR_curr- 1) / 10
+                            orienting = True
+                            
+                        else: 
+                            move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
+                            self.cmd_vel.publish(move_cmd)
+                            self.rate.sleep()
+                if (self.AR_seen):
+                    print "see AR"
+                    self.sounds.publish(Sound.ON)
+                    self.prev_state = 'go_to_pos'
+                    self.state = 'go_to_AR'
+            
+            elif (self.state == "go_to_AR"): 
+                # parking the robot
+                self.state2 = SEARCHING
+                park_check = self.park()
+                # only continue with main run sequence if parking was succesful
+                if park_check == -1:
+                    print "parking unsuccesful - going back to go to pos"
+                    self.AR_seen = False
+                    self.state = 'go_to_pos'
+                else:
+                    # return from handle ar!
+                    print "parking succesful"
+                    self.AR_seen = False
+                    
+                    if (self.AR_curr is not Home):
+                        if (self.AR_curr == 6 or self.AR_curr == 5):
+                            self.AR_curr = (Home * 10) + 1
                         else:
-                            if ((self.AR_curr > 10)):
-                                travel_time = 100
-                                if (self.AR_curr == (Home*10) + 1):
-                                    travel_time = 20 #check on this
-                                for i in range(travel_time):
-                                    move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
-                                    self.execute_command(move_cmd)
-                                self.AR_curr = (self.AR_curr- 1) / 10
-                                orienting = True
-                                
-                            else: 
-                                move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
-                                self.cmd_vel.publish(move_cmd)
-                                self.rate.sleep()
-                    if (self.AR_seen and self.ar_z < 1.5):
-                        print "see AR"
-                        self.sounds.publish(Sound.ON)
-                        self.prev_state = 'go_to_pos'
-                        self.state = 'go_to_AR'
-                
-                elif (self.state == "go_to_AR"): 
-                    # parking the robot
-                    self.state2 = SEARCHING
-                    park_check = self.park()
-                    # only continue with main run sequence if parking was succesful
-                    if park_check == -1:
-                        print "parking unsuccesful - going back to go to pos"
-                        self.AR_seen = False
+                            self.AR_curr = Home
+                        self.prev_state = 'go_to_AR'
                         self.state = 'go_to_pos'
                     else:
-                        # return from handle ar!
-                        print "parking succesful"
-                        self.AR_seen = False
-                        
-                        if (self.AR_curr is not Home):
-                            if (self.AR_curr == 6 or self.AR_curr == 5):
-                                self.AR_curr = (Home * 10) + 1
-                            else:
-                                self.AR_curr = Home
-                            self.prev_state = 'go_to_AR'
-                            self.state = 'go_to_pos'
-                        else:
-                            self.AR_curr = -1
-                            self.prev_state = 'go_to_AR'
-                            self.state = 'wait'
-                        self.cmd_vel.publish(move_cmd)
-                        self.rate.sleep()
-                # self.sounds.publish(Sound.ON)
+                        self.AR_curr = -1
+                        self.prev_state = 'go_to_AR'
+                        self.state = 'wait'
+                    self.cmd_vel.publish(move_cmd)
+                    self.rate.sleep()
+            # self.sounds.publish(Sound.ON)
                 
-            if (self.state == "avoid_obstacle" or self.state == "bumped"):
+            elif (self.state == "avoid_obstacle" or self.state == "bumped"):
                 self.sounds.publish(Sound.ON)
                 print "OBSTACLE OR BUMP"
                 sec = 0
@@ -270,8 +269,7 @@ class Main2:
 
     def park(self):
         """
-        - Control the state that the robot is currently in 
-        - Run until Ctrl+C pressed
+        - Control the parking that the robot 
         :return: None
         """
 
@@ -317,116 +315,61 @@ class Main2:
 
         while not rospy.is_shutdown(): 
             while self.state is not "bumped" or self.state is not "avoid_obstacle":
-            # only begin parking when the ARTag has been 
-            # located and saved in markers dictionary
-            if self.state2 is SEARCHING and len(self.markers) > 0:
-                print "in SEARCHING"
-
-                # used to decide what side of the robot the ARTag is on
-                theta_org = self.ar_orientation
-
-                # using the magnitude of the small angle 
-                # between the robot and ARTag, beta, for most calculations 
-                beta = abs(radians(180) - abs(theta_org))   
-                self.state2 = ZERO_X
-
-
-            # handle event of ARTag being lost while parking sequence goes on
-            # this has high priority over other states
-            elif self.state2 is SEARCHING_2:
-                print "in SEARCHING 2 - ar tag lost"
-
-                # keep track of ar_x, which would only 
-                # be updated when ARTag is in view
-                past_xs.append(self.ar_x)
-
-                # if ar_x is being updated, then ARTag has been found, 
-                # return to parking
-                if len(past_xs) > MIN_FOUND_TAGS:
-                    if past_xs[-1] != past_xs[-2]:
-                        print "found tag again!"
-                        lost_timer = 0 # clear the lost timer
-                        osc_count = 0 # clear counter for oscillations
-                        del pat_xs [:] # clear list of past ar_xs
-                        self.state2 = ZERO_X
-                
-                # if the ARTag has been lost for too long, 
-                # return that parking was unsuccesful
-                elif rospy.Time.now() - lost_timer > rospy.Duration(10):
-                    print "cant find tag, going to return!"
-                    return -1
-
-                # oscillate while looking for ARTag to 
-                # maximize chances of finding it again
-                osc_count+=1 
-                osc_count = osc_count % OSC_LIM
-                if osc_count < OSC_LIM*0.5:  
-                    self.execute_command(self.mover.twist(radians(-30)))
-                else:
-                    self.execute_command(self.mover.twist(radians(30)))
+                # only begin parking when the ARTag has been 
+                # located and saved in markers dictionary
+                if self.state2 is SEARCHING and len(self.markers) > 0:
+                    print "in SEARCHING"
 
                     # used to decide what side of the robot the ARTag is on
                     theta_org = self.ar_orientation
 
-            # turn to face the ARTag 
-            if self.state2 is ZERO_X:
-                print "in zero x"
-
-                # keep track of whether the ARTag is still in view or is lost
-                past_xs.append(self.ar_x)
-                if any(sum(1 for _ in g) > MAX_LOST_TAGS for _, g in groupby(past_xs)):
-                    self.state2 = SEARCHING_2
-                    lost_timer = rospy.Time.now() # track how long the ARTag has been lost 
-                
-                # turn until ar_x is almost 0
-                elif abs(self.ar_x) > X_ACC:
-                    self.execute_command(self.mover.twist(-K_ROT*self.ar_x))
-                
-                # triangulate distances and angles to guide 
-                # robot's parking and move to next state
-                else:      
-                    alpha_dist = cm.third_side(self.ar_z, LL_DIST, beta) # meters
-                    alpha = cm.get_angle_ab(self.ar_z, alpha_dist, LL_DIST) # radians
-                    self.state2 = TURN_ALPHA
+                    # using the magnitude of the small angle 
+                    # between the robot and ARTag, beta, for most calculations 
+                    beta = abs(radians(180) - abs(theta_org))   
+                    self.state2 = ZERO_X
 
 
-            # turn away from AR_TAG by a small angle alpha
-            elif self.state2 is TURN_ALPHA:
-                print "in turn alpha"
+                # handle event of ARTag being lost while parking sequence goes on
+                # this has high priority over other states
+                elif self.state2 is SEARCHING_2:
+                    print "in SEARCHING 2 - ar tag lost"
 
-                # if robot is already close to ARTag, it should just park  
-                if self.ar_z <= CLOSE_DIST*2: 
-                    print "dont need to turn - z distance is low"
-                    self.state2 = MOVE_PERF
+                    # keep track of ar_x, which would only 
+                    # be updated when ARTag is in view
+                    past_xs.append(self.ar_x)
 
-                # alpha will be exceptionally high when LL_DIST 
-                # is much greater than ar_z + alpha_dist - only need to park
-                elif abs(alpha) > 100:
-                    print "dont need to turn - alpha is invalid"
-                    self.state2 = MOVE_PERF
-                
-                # regular operation of just turning alpha
-                else: 
-                    # keep track of how much robot has turned 
-                    # since it entered 'alpha' state
-                    past_orr.append(self.orientation)
-                    dif =  abs(self.orientation - past_orr[0])
-                    rad2go = abs(alpha - dif)
+                    # if ar_x is being updated, then ARTag has been found, 
+                    # return to parking
+                    if len(past_xs) > MIN_FOUND_TAGS:
+                        if past_xs[-1] != past_xs[-2]:
+                            print "found tag again!"
+                            lost_timer = 0 # clear the lost timer
+                            osc_count = 0 # clear counter for oscillations
+                            del pat_xs [:] # clear list of past ar_xs
+                            self.state2 = ZERO_X
+                    
+                    # if the ARTag has been lost for too long, 
+                    # return that parking was unsuccesful
+                    elif rospy.Time.now() - lost_timer > rospy.Duration(10):
+                        print "cant find tag, going to return!"
+                        return -1
 
-                    # want to always turn away from the ARTag until 
-                    # robot has almost turned alpha
-                    if rad2go > ALPHA_RAD_CLOSE: 
-                        if theta_org < 0:
-                            self.execute_command(self.mover.twist(-KROT*rad2go)) # robot on left side
-                        else:
-                            self.execute_command(self.mover.twist(KROT*rad2go)) # robot on right side
+                    # oscillate while looking for ARTag to 
+                    # maximize chances of finding it again
+                    osc_count+=1 
+                    osc_count = osc_count % OSC_LIM
+                    if osc_count < OSC_LIM*0.5:  
+                        self.execute_command(self.mover.twist(radians(-30)))
                     else:
                         self.execute_command(self.mover.twist(radians(30)))
+
+                        # used to decide what side of the robot the ARTag is on
+                        theta_org = self.ar_orientation
 
 
                 # turn to face the ARTag 
                 if self.state2 is ZERO_X:
-                    print self.state2
+                    print "in zero x"
 
                     # keep track of whether the ARTag is still in view or is lost
                     past_xs.append(self.ar_x)
@@ -448,7 +391,7 @@ class Main2:
 
                 # turn away from AR_TAG by a small angle alpha
                 elif self.state2 is TURN_ALPHA:
-                    print self.state2 
+                    print "in turn alpha"
 
                     # if robot is already close to ARTag, it should just park  
                     if self.ar_z <= CLOSE_DIST*2: 
@@ -473,21 +416,16 @@ class Main2:
                         # robot has almost turned alpha
                         if rad2go > ALPHA_RAD_CLOSE: 
                             if theta_org < 0:
-                                self.execute_command(self.mover.twist(-K_ROT*rad2go)) # robot on left side
+                                self.execute_command(self.mover.twist(-KROT*rad2go)) # robot on left side
                             else:
-                                self.execute_command(self.mover.twist(K_ROT*rad2go)) # robot on right side
+                                self.execute_command(self.mover.twist(KROT*rad2go)) # robot on right side
                         else:
-                            del past_orr [:] # clear list of past orientations
-                            self.execute_command(self.mover.stop())
-                            self.state2 = MOVE_ALPHA
+                            self.execute_command(self.mover.twist(radians(30)))
 
-            # move to a position that makes parking convenient
-            elif self.state2 == MOVE_ALPHA:
-                print "in move alpha"
 
                 # move to a position that makes parking convenient
                 elif self.state2 == MOVE_ALPHA:
-                    print self.state2
+                    print "in move alpha"
 
                     # keep track of how far robot has moved since it entered 'MOVE_ALPHA'
                     past_pos.append(self.position)
@@ -506,13 +444,9 @@ class Main2:
                             del past_orr [:] # clear list of past positions
                             self.state2 = MOVE_PERF
 
-            # move in a straight line to the ar tag 
-            elif self.state2 == MOVE_PERF:
-                print "in move perf"
-
                 # move in a straight line to the ar tag 
                 elif self.state2 == MOVE_PERF:
-                    print self.state2
+                    print "in move perf"
 
                     # check that robot is facing the ARTag
                     if abs(self.ar_x) > X_ACC*3:
@@ -531,7 +465,7 @@ class Main2:
 
                 # wait to recieve package 
                 elif self.state2 == SLEEPING:
-                    print self.state2
+                    print "in sleeping"
                     sleep_count+=1
                     rospy.sleep(1)
                     if sleep_count > SLEEP_TIME:
@@ -540,40 +474,20 @@ class Main2:
 
                 # back out from the ARTag
                 elif self.state2 == BACK_OUT:  
-                    print self.state2
+                    print "in back out"
                     self.execute_command(self.mover.back_out())
                     if self.ar_z > CLOSE_DIST*3:
                         # set parameters for avoiding obstacles
-                        self.close = False
-                        self.close_VERY = True
-                        self.state2 = SLEEPING
+                        self.close_VERY = False
+                        self.state2 = DONE_PARKING
 
 
-            # wait to recieve package 
-            elif self.state2 == SLEEPING:
-                print "in sleeping"
-                sleep_count+=1
-                rospy.sleep(1)
-                if sleep_count > SLEEP_TIME:
-                    self.state2 = BACK_OUT
-
-
-            # back out from the ARTag
-            elif self.state2 == BACK_OUT:  
-                print "in back out"
-                self.execute_command(self.mover.back_out())
-                if self.ar_z > CLOSE_DIST*3:
-                    # set parameters for avoiding obstacles
-                    self.close_VERY = False
-                    self.state2 = DONE_PARKING
-
-
-            # done with the parking sequence!
-            elif self.state2 == DONE_PARKING:
-                print "in done parking"
-                self.execute_command(self.mover.stop())
-                # return succesful parking 
-                return 0
+                # done with the parking sequence!
+                elif self.state2 == DONE_PARKING:
+                    print "in done parking"
+                    self.execute_command(self.mover.stop())
+                    # return succesful parking 
+                    return 0
 
                 self.rate.sleep()
 
