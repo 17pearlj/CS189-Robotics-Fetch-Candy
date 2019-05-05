@@ -154,6 +154,28 @@ class Main2:
             self.AR_curr = self.AR_curr*10 + 1
         while not rospy.is_shutdown():
             # print "my position %s" % str(self.mapper.positionToMap(self.position)) 
+            if (self.state == "avoid_obstacle" or self.state == "bumped"):
+                self.sounds.publish(Sound.ON)
+                print "OBSTACLE OR BUMP"
+                sec = 0
+                if (self.state == "bumped" and not self.close_VERY):
+                    print "bump when not very close to ar_tag"
+                    # we may not want it to move backward (we would be going off our path)
+                   # self.execute_command(self.mover.bumped())
+                    sec = 5
+                elif (self.close_VERY):
+                    print "obstacle when very close to ar_tag!!"
+                    sec = 15
+                elif (self.close == False):
+                    print "obstacle, not close to ar tag"
+                    sec = 2
+                else:
+                    print "obstacle, moderately close to ar tag"
+                    sec = 5
+                rospy.sleep(sec)
+                self.state = self.prev_state
+                self.prev_state = 'avoid_obstacle'
+                
             move_cmd = Twist()
             while (self.state == 'wait'):
                 # just wait around 
@@ -233,27 +255,7 @@ class Main2:
                     self.rate.sleep()
             # self.sounds.publish(Sound.ON)
                 
-            if (self.state == "avoid_obstacle" or self.state == "bumped"):
-                self.sounds.publish(Sound.ON)
-                print "OBSTACLE OR BUMP"
-                sec = 0
-                if (self.state == "bumped" and not self.close_VERY):
-                    print "bump when not very close to ar_tag"
-                    # we may not want it to move backward (we would be going off our path)
-                   # self.execute_command(self.mover.bumped())
-                    sec = 5
-                elif (self.close_VERY):
-                    print "obstacle when very close to ar_tag!!"
-                    sec = 15
-                elif (self.close == False):
-                    print "obstacle, not close to ar tag"
-                    sec = 2
-                else:
-                    print "obstacle, moderately close to ar tag"
-                    sec = 5
-                rospy.sleep(sec)
-                self.state = self.prev_state
-                self.prev_state = 'avoid_obstacle'
+            
 
     
     def execute_command(self, my_move):
