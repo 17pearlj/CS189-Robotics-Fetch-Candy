@@ -173,6 +173,7 @@ class Main2:
                             angle_dif = cm.angle_compare(self.orientation, dest_orientation)
                             if (abs(float(angle_dif)) < abs(math.radians(5))):
                                 move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
+                                self.execute_command(move_cmd)
                                 orienting = False
                                 
                             else:
@@ -262,9 +263,10 @@ class Main2:
         :param: a move command with linear and angular velocity set, see move_scipt.py
         :return: None
         """
-        move_cmd = my_move
-        self.cmd_vel.publish(move_cmd)
-        self.rate.sleep()
+        while (self.state is not "bumped" or self.state is not "avoid_obstacle"):
+            move_cmd = my_move
+            self.cmd_vel.publish(move_cmd)
+            self.rate.sleep()
 
     def park(self):
         """
@@ -597,6 +599,7 @@ class Main2:
             if (w*h > 400):
                 if (self.obstacle_OFF == False and self.close_VERY == False):
                     print "avoiding obstacle"
+                    self.prev_state = self.state
                     self.state = 'avoid_obstacle'
  
                 else:
@@ -644,6 +647,7 @@ class Main2:
         """
         if (data.state == BumperEvent.PRESSED):
             print "BUMP"
+            self.prev_state = self.state
             self.state = 'bumped'
             print self.state
 
