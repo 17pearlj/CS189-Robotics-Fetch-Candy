@@ -161,8 +161,6 @@ class Main2:
                 sec = 0
                 if (self.state == "bumped" and not self.close_VERY):
                     print "bump when not very close to ar_tag"
-                    # we may not want it to move backward (we would be going off our path)
-                   # self.execute_command(self.mover.bumped())
                     sec = 5
 
                 elif (self.close_VERY):
