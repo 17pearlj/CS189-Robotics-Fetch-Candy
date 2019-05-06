@@ -31,6 +31,8 @@ from itertools import groupby
 # valid ids for AR Tags
 VALID_IDS = range(18)
 Home = 1
+LEFT = -1
+RIGHT = 1
 
 # states in park(); ie state2
 SEARCHING = 0
@@ -72,7 +74,7 @@ class Main2:
         self.AR_curr = -1
         # dictionary for ar ids and coordinates
         self.AR_ids = {
-            1: [(0, 14),  2, 1],
+            1: [(0, 17),  2, 0.9],
             11: [(-15, 16), -5, 1.5],
             2: [(-4, 10), 1, .75,],
             3: [(-45, 10), 1, 1.5],
@@ -97,8 +99,7 @@ class Main2:
         self.close = False # if there's an obstacle and we are really close to the ar_tag, it's probably another robot
         self.close_VERY = True # if we are extremely close to the ar_tag, we are just going to park or get bumped
         
-        LEFT = -1
-        RIGHT = 1
+       
         self.obs_side = 0 # left -1, right 1
         self.AR_seen = False
             
@@ -183,7 +184,7 @@ class Main2:
                     sec = 15
 
                 # obstacle while ar_tag not spotted
-                while (self.state = "avoid_obstacle" and self.close == False):
+                while (self.state == "avoid_obstacle" and self.close == False):
                     for i in range (2):
                         self.execute_command(self.mover.avoid_obstacle(self.obs_side))
                     self.execute_command(self.mover.go_forward())
@@ -697,7 +698,7 @@ class Main2:
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data)
 
-            mask = cv2.inRange(cv_image, 0.1, .5)
+            mask = cv2.inRange(cv_image, 0.1, 0.5)
             mask[:, 0:180] = 0
             mask[:, 460:] = 0
             # create a mask to restrict the depth that can be seen 
