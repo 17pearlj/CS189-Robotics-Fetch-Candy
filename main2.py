@@ -263,6 +263,7 @@ class Main2:
             # go to the ARTag
             if (self.state == "go_to_AR"): 
                 # parking the robot
+                self.close = True
                 self.state2 = SEARCHING
 
                 park_check = self.park()
