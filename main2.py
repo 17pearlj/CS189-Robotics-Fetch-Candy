@@ -99,6 +99,7 @@ class Main2:
         self.close_VERY = False # if we are extremely close to the ar_tag, we are just going to park or get bumped
         self.AR_seen = False
         self.AR_seen_real = False
+        self.main_past_xs = []
             
         # # ---- rospy stuff ----
         # Initialize the node
@@ -152,8 +153,6 @@ class Main2:
         - Run until Ctrl+C pressed
         :return: None
         """
-        past_xs = []
-        test_count = 0
 
         self.AR_curr = int(sys.argv[1])
         if (self.AR_curr == 5 or self.AR_curr == 6):
@@ -195,13 +194,10 @@ class Main2:
 
             if (self.state == 'go_to_pos'):
                 orienting = True 
-                print self.ar_z
-
                 
-
-                while (not(self.AR_seen)):
+                
+                while (not(self.AR_seen_real) and self.ar_z > 1.5):
                     while (orienting):
-
                         pos = self.AR_ids[self.AR_curr]
                         dest_orientation = cm.orient(self.mapper.positionToMap(self.position), pos)
                         angle_dif = cm.angle_compare(self.orientation, dest_orientation)
@@ -221,6 +217,7 @@ class Main2:
                             self.cmd_vel.publish(move_cmd)
                             self.rate.sleep()
                     else:
+
                         if ((self.AR_curr > 10)):
                             travel_time = 100
                             if (self.AR_curr == (Home*10) + 1):
@@ -233,20 +230,9 @@ class Main2:
                             
                         else: 
                             print "check 4"
-                            
-                            #keep track of past_xs so robot knows whether it is actually seeing the ARTag
-                            past_xs.append(self.ar_x)
-                            test_count+=1
-                
-
-                            # checks that the last 10 updates of self.ar_x are different from each other
-                            if cm.valid_list(past_xs, 10) == True:
-                                self.AR_seen_real = True
-                            print str(test_count) + " " + str(self.ar_x)
-                            
                             move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
                             self.execute_command(move_cmd)
-                if (self.AR_seen and self.AR_seen_real):
+                if (self.AR_seen_real):
                     print "AR seen for real!!!"
                     print self.AR_seen_real
                     self.sounds.publish(Sound.ON)
@@ -262,11 +248,13 @@ class Main2:
                 if park_check == -1:
                     print "parking unsuccesful - going back to go to pos"
                     self.AR_seen = False
+                    self.AR_seen_real = False
                     self.state = 'go_to_pos'
                 else:
                     # return from handle ar!
                     print "parking succesful"
                     self.AR_seen = False
+                    self.AR_seen_real = False
                     
                     if (self.AR_curr is not Home):
                         if (self.AR_curr == 6 or self.AR_curr == 5):
@@ -412,10 +400,11 @@ class Main2:
 
                     # keep track of whether the ARTag is still in view or is lost
                     past_xs.append(self.ar_x)
-                    if not cm.valid_list(past_xs, 10):
-                        lost_timer = rospy.Time.now() # track how long the ARTag has been lost 
-                        del past_xs [:] # clear list of past ar_xs
-                        self.state2 = SEARCHING_2
+                    if len(past_xs) > 10:
+                        if not cm.valid_list(past_xs, 10):
+                            lost_timer = rospy.Time.now() # track how long the ARTag has been lost 
+                            del past_xs [:] # clear list of past ar_xs
+                            self.state2 = SEARCHING_2
                         
                     # turn until ar_x is almost 0
                     elif abs(self.ar_x) > X_ACC:
@@ -585,6 +574,10 @@ class Main2:
                 list_orientation = [orientation.x, orientation.y, orientation.z, orientation.w]
                 self.ar_orientation = tf.transformations.euler_from_quaternion(list_orientation)[0]
                 self.markers[marker.id] = distance
+
+                self.main_past_xs.append(self.ar_x)
+                if cm.valid_list(self.main_past_xs, 30) == True:
+                    self.AR_seen_real = True
         
     def print_markers(self):
         """
