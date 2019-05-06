@@ -223,7 +223,7 @@ class Main2:
                                 self.execute_command(move_cmd)
                             self.AR_curr = (self.AR_curr- 1) / 10
                             orienting = True
-                if (self.AR_seen and self.ar_z < self.AR_ids[self.AR_curr][0]):
+                if (self.AR_seen and self.ar_z < self.AR_ids[self.AR_curr][2]):
                     print "see AR"
                     self.sounds.publish(Sound.ON)
                     self.prev_state = 'go_to_pos'
