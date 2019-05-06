@@ -234,7 +234,7 @@ class Main2:
                             print "check 4"
                             move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
                             self.execute_command(move_cmd)
-                if (self.AR_seen and found_AR_real):
+                if (self.AR_seen and self.ar_z < 1.5):
                     print "see AR"
                     print found_AR_real
                     self.sounds.publish(Sound.ON)
@@ -298,7 +298,7 @@ class Main2:
         # goal distance between robot and ARTag before perfect parking 
         LL_DIST = 0.5 # m
         # distance between ARTag and robot when robot is almost touching it 
-        CLOSE_DIST = 0.28 # m
+        CLOSE_DIST = 0.24 # m
         # desired accuracy when zeroing in on ARTag 
         X_ACC = 0.07 # m
         # parameters for limiting robots movement
@@ -442,11 +442,13 @@ class Main2:
                         # keep track of how much robot has turned 
                         # since it entered 'alpha' state
                         past_orr.append(self.orientation)
-                        dif =  abs(self.orientation - past_orr[0])
+                        dif2 =  abs(self.orientation - past_orr[0])
+                        dif = cm.angle_compare(self.orientation, past_orr[0])
                         rad2go = abs(alpha) - abs(dif)
 
                         print "dif" + str(degrees(dif))
                         print "alpha" + degrees(alpha)
+                        print "rad2go " + str(degrees(rad2go))
                         
 
                         # want to always turn away from the ARTag until 
