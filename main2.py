@@ -423,6 +423,7 @@ class Main2:
                     # triangulate distances and angles to guide 
                     # robot's parking and move to next state
                     else: 
+                        print "zeroed x"
                         if almost_perfet == True:
                             almost_perfet = False
                             self.state2 = MOVE_PERF
@@ -461,6 +462,7 @@ class Main2:
                             ang_velocity = rad2go * cm.prop_k_rot(rad2go)
                             self.execute_command(self.mover.twist(ang_velocity)) 
                         else:
+                          print "turned alpha"
                           del past_orr [:] # clear list of past orientations
                           self.execute_command(self.mover.stop())
                           self.state2 = MOVE_ALPHA
@@ -478,11 +480,12 @@ class Main2:
                     dist2go = abs(alpha_dist) - abs(dist_traveled)
 
                     # travel until the alpha_dist has been moved - need this to be very accurate
-                    if dist2go > ALPHA_DIST_CLOSE and dist2go > CLOSE_DIST*2.5:
+                    if dist2go > ALPHA_DIST_CLOSE and dist2go > CLOSE_DIST*:
                         self.execute_command(self.mover.go_forward_K(K_LIN*alpha_dist))
                         print "dist2go in move alpha " + str(dist2go)
                     # dont need to do this anymore, right up agains AR_TAG
-                    elif self.ar_z < CLOSE_DIST*2.5:
+                    elif self.ar_z =< CLOSE_DIST:
+                         print "close-- "
                          self.state2 = MOVE_PERF
 
                     # turn to face ARTag before moving directly to it 
