@@ -190,7 +190,6 @@ class Main2:
 
             if (self.state == 'go_to_pos'):
                 orienting = True 
-                print self.ar_z
 
                 while (not(self.AR_seen) or self.ar_z >= 1.5):
                     while (orienting):
@@ -228,9 +227,9 @@ class Main2:
                             print "check 4"
                             move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
                             self.execute_command(move_cmd)
-                if (self.AR_seen and self.ar_z >= 1.5):
-                    print "see AR"
-                    print found_AR_real
+
+                if (self.AR_seen and self.ar_z <= 1.5):
+                    print "seen AR"
                     self.sounds.publish(Sound.ON)
                     self.prev_state = 'go_to_pos'
                     self.state = 'go_to_AR'
@@ -437,11 +436,11 @@ class Main2:
                         # keep track of how much robot has turned 
                         # since it entered 'alpha' state
                         past_orr.append(self.orientation)
-                        dif =  abs(self.orientation - past_orr[0])
+                        dif =  cm.angle_compare(self.orientation,past_orr[0])
                         rad2go = abs(alpha) - abs(dif)
 
                         print "dif" + str(degrees(dif))
-                        print "alpha" + degrees(alpha)
+                        print "rad2go" + str(degrees(rad2go))
                         
 
                         # want to always turn away from the ARTag until 

@@ -50,7 +50,7 @@ class Main2:
     def __init__(self):
         # information about the robot's current position and orientation relative to start
         self.position = [0, 0]
-        self.orientation = radians(0) # CCW +, radians 
+        self.orientation = radians(180) # CCW +, radians 
         
         # mapping object will come from imported module 
         self.mapper = map_script.MapMaker()
@@ -274,7 +274,7 @@ class Main2:
             self.cmd_vel.publish(move_cmd)
             self.rate.sleep()
 
-        def park(self):
+    def park(self):
         """
         - Control the parking that the robot does
         :return: None
@@ -663,7 +663,7 @@ class Main2:
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data)
 
-            mask = cv2.inRange(cv_image, 0.1, .3)
+            mask = cv2.inRange(cv_image, 0.1, .5)
             mask[:, 0:140] = 0
             mask[:, 500:] = 0
             # create a mask to restrict the depth that can be seen 
