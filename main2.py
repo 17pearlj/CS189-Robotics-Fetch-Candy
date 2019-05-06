@@ -443,6 +443,15 @@ class Main2:
                     # alpha will be exceptionally high when LL_DIST 
                     # is much greater than ar_z + alpha_dist - only need to park
                     elif abs(alpha) > 100:
+                        print "self ar z"
+                        print self.ar_z
+                        print "beta"
+                        print beta
+                        print "alpha dist"
+                        print alpha_dist
+                        print "alpha"
+                        print alpha
+                        
                         print "dont need to turn - alpha is invalid"
                         self.state2 = MOVE_PERF
                     # regular operation of just turning alpha
