@@ -444,6 +444,15 @@ class Main2:
                     # alpha will be exceptionally high when LL_DIST 
                     # is much greater than ar_z + alpha_dist - only need to park
                     elif abs(alpha) > 100:
+                        print "self ar z"
+                        print self.ar_z
+                        print "beta"
+                        print beta
+                        print "alpha dist"
+                        print alpha_dist
+                        print "alpha"
+                        print alpha
+                        
                         print "dont need to turn - alpha is invalid"
                         self.state2 = MOVE_PERF
                     # regular operation of just turning alpha
@@ -481,11 +490,11 @@ class Main2:
                     dist2go = abs(alpha_dist) - abs(dist_traveled)
 
                     # travel until the alpha_dist has been moved - need this to be very accurate
-                    if dist2go > ALPHA_DIST_CLOSE and dist2go > CLOSE_DIST*:
+                    if dist2go > ALPHA_DIST_CLOSE and dist2go > CLOSE_DIST:
                         self.execute_command(self.mover.go_forward_K(K_LIN*alpha_dist))
                         print "dist2go in move alpha " + str(dist2go)
                     # dont need to do this anymore, right up agains AR_TAG
-                    elif self.ar_z =< CLOSE_DIST:
+                    elif self.ar_z <= CLOSE_DIST:
                          print "close-- "
                          self.state2 = MOVE_PERF
 
