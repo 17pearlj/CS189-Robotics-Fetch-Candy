@@ -72,16 +72,16 @@ class Main2:
         self.AR_curr = -1
         # dictionary for ar ids and coordinates
         self.AR_ids = {
-            1: (0, 17), 
-            11: (15, 18),
-            2: (4, 24),
-            3: (45, 24),
-            4: (31, 10), 
-            51: (35, 18), #fake location to get around table
-            5: (23, 10),
-            61: (35, 18), #fake location to get around table
-            6: (23, 8),
-            7: (9, 5)
+            1: [(0, 17),  2, 1.5],
+            11: [(-15, 18), -5, 1.5],
+            2: [(-4, 24), 1, .75,],
+            3: [(-45, 24), 1, 1.5],
+            4: [(-31, 10), 0, 1.5],
+            51: [(-35, 18), -5, 1.5], #fake location to get around table
+            5: [(-23, 10), -1, 1.5],
+            61: [(-35, 18), -5, 1.5], #fake location to get around table
+            6: [(-23, 8), 2, 1.5],
+            7: [(-9, 5), -1, .75]
         } 
 
         # vector orientation of ARTag relative to robot 
@@ -154,33 +154,32 @@ class Main2:
         if (self.AR_curr == 5 or self.AR_curr == 6):
             self.AR_curr = self.AR_curr*10 + 1
         while not rospy.is_shutdown():
-            # print "my position %s" % str(self.mapper.positionToMap(self.position)) 
-            if (self.state == "avoid_obstacle" or self.state == "bumped"):
-                self.execute_command(self.mover.stop())
+            move_cmd = Twist()
+            
+            if (self.state is "bumped" or self.state is "avoid_obstacle"):
+                print "HI"
                 self.sounds.publish(Sound.ON)
-                print "OBSTACLE OR BUMP"
                 sec = 0
                 if (self.state == "bumped" and not self.close_VERY):
                     print "bump when not very close to ar_tag"
-                    # we may not want it to move backward (we would be going off our path)
-                   # self.execute_command(self.mover.bumped())
                     sec = 5
+
                 elif (self.close_VERY):
                     print "obstacle when very close to ar_tag!!"
                     sec = 15
                 elif (self.close == False):
                     print "obstacle, not close to ar tag"
-                    sec = 2
+                    sec = 5
                 else:
                     print "obstacle, moderately close to ar tag"
                     sec = 5
                 rospy.sleep(sec)
                 self.prev_state = 'avoid_obstacle'
-                self.state = self.prev_state
+                self.state = "go_to_pos"
                 
 
-            move_cmd = Twist()
-            while (self.state == 'wait'):
+            
+            if (self.state == 'wait'):
                 # just wait around 
                 move_cmd = self.mover.wait()
                 if (self.AR_curr != -1):
@@ -190,30 +189,29 @@ class Main2:
 
             if (self.state == 'go_to_pos'):
                 orienting = True 
-
-                while (not(self.AR_seen) or self.ar_z >= 1.5):
-                    while (orienting):
-
-                        pos = self.AR_ids[self.AR_curr]
+                if (not(self.AR_seen) or self.ar_z >= self.AR_ids[self.AR_curr][2]):
+                    if (orienting):
+                        pos = self.AR_ids[self.AR_curr][0]
                         dest_orientation = cm.orient(self.mapper.positionToMap(self.position), pos)
                         angle_dif = cm.angle_compare(self.orientation, dest_orientation)
                         if (abs(float(angle_dif)) < abs(math.radians(5)) and self.state is not "bumped"):
                             move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
-                            print "check1"
+                            print "forward 1"
                             orienting = False
                             self.execute_command(move_cmd)
                         else:
                             # Turn in the relevant direction
                             if angle_dif < 0:
-                                print "check2"
+                                print "left"
                                 move_cmd = self.mover.go_to_pos("left", self.position, self.orientation)
                             else:
                                 move_cmd = self.mover.go_to_pos("right", self.position, self.orientation)
-                                print "check3"
-                            self.cmd_vel.publish(move_cmd)
-                            self.rate.sleep()
-                    else:
+                                print "right"
+                            self.execute_command(move_cmd)
+                            
+                    if (not orienting):
                         if ((self.AR_curr > 10)):
+                            print "big ar tag"
                             travel_time = 100
                             if (self.AR_curr == (Home*10) + 1):
                                 travel_time = 20 #check on this
@@ -222,14 +220,8 @@ class Main2:
                                 self.execute_command(move_cmd)
                             self.AR_curr = (self.AR_curr- 1) / 10
                             orienting = True
-                            
-                        else: 
-                            print "check 4"
-                            move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
-                            self.execute_command(move_cmd)
-
-                if (self.AR_seen and self.ar_z <= 1.5):
-                    print "seen AR"
+                if (self.AR_seen and self.ar_z < self.AR_ids[self.AR_curr][2]):
+                    print "see AR"
                     self.sounds.publish(Sound.ON)
                     self.prev_state = 'go_to_pos'
                     self.state = 'go_to_AR'
@@ -278,9 +270,7 @@ class Main2:
             move_cmd = my_move
             self.cmd_vel.publish(move_cmd)
             self.rate.sleep()
-        else:
-            self.self.cmd_vel.publish(self.mover.stop())
-            self.rate.sleep()
+
 
 
     def park(self):
@@ -523,6 +513,7 @@ class Main2:
                 # back out from the ARTag
                 elif self.state2 == BACK_OUT:  
                     print "in back out"
+                    self.position = self.mapper.positionFromMap(self.AR_ids[self.AR_curr][0])
                     self.execute_command(self.mover.back_out())
                     if self.ar_z > CLOSE_DIST*3:
                         # set parameters for avoiding obstacles
@@ -643,8 +634,9 @@ class Main2:
 
             # obstacle must be even larger to get the state to be switched 
             if (w*h > 400):
-                if (self.obstacle_OFF == False and self.close_VERY == False):
+                if (self.close_VERY == False):
                     print "avoiding obstacle"
+                    self.execute_command(self.mover.stop())
                     self.prev_state = self.state
                     self.state = 'avoid_obstacle'
  
