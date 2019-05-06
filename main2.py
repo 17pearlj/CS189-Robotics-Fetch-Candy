@@ -232,9 +232,15 @@ class Main2:
                             print "check 4"
                             move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
                             self.execute_command(move_cmd)
+<<<<<<< HEAD
                 if (self.AR_seen_real):
                     print "AR seen for real!!!"
                     print self.AR_seen_real
+=======
+                if (self.AR_seen and self.ar_z < 1.5):
+                    print "see AR"
+                    print found_AR_real
+>>>>>>> f756dbf0f72a0df49902f0d22b4d67f0310877f4
                     self.sounds.publish(Sound.ON)
                     self.prev_state = 'go_to_pos'
                     self.state = 'go_to_AR'

@@ -84,7 +84,7 @@ class Main2:
             5: [(23, 10), -1, 1.5],
             61: [(35, 18), -5, 1.5], #fake location to get around table
             6: [(23, 8), 2, 1.5],
-            7: [(9, 5), -1, 1.5]
+            7: [(9, 5), -1, .75]
         } 
 
         # vector orientation of ARTag relative to robot 
@@ -223,7 +223,7 @@ class Main2:
                                 self.execute_command(move_cmd)
                             self.AR_curr = (self.AR_curr- 1) / 10
                             orienting = True
-                if (self.AR_seen and self.ar_z < self.AR_ids[self.AR_curr][0]):
+                if (self.AR_seen and self.ar_z < self.AR_ids[self.AR_curr][2]):
                     print "see AR"
                     self.sounds.publish(Sound.ON)
                     self.prev_state = 'go_to_pos'
@@ -274,9 +274,7 @@ class Main2:
             self.cmd_vel.publish(move_cmd)
             self.rate.sleep()
 
-
-
-       def park(self):
+        def park(self):
         """
         - Control the parking that the robot does
         :return: None
@@ -538,6 +536,7 @@ class Main2:
                     return 0
 
                 self.rate.sleep()
+
 
     # ------------------ Functions telling us about the robot ---------------- #     
 
