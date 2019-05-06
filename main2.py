@@ -480,7 +480,7 @@ class Main2:
                     dist2go = abs(alpha_dist) - abs(dist_traveled)
 
                     # travel until the alpha_dist has been moved - need this to be very accurate
-                    if dist2go > ALPHA_DIST_CLOSE and dist2go > CLOSE_DIST*:
+                    if dist2go > ALPHA_DIST_CLOSE and dist2go > CLOSE_DIST:
                         self.execute_command(self.mover.go_forward_K(K_LIN*alpha_dist))
                         print "dist2go in move alpha " + str(dist2go)
                     # dont need to do this anymore, right up agains AR_TAG
