@@ -314,14 +314,14 @@ class Main2:
         """
 
         # goal distance between robot and ARTag before perfect parking 
-        LL_DIST = 0.5 # m
+        LL_DIST = 1 # m
         # distance between ARTag and robot when robot is almost touching it 
         CLOSE_DIST = 0.23 # m
         # desired accuracy when zeroing in on ARTag 
-        X_ACC = 0.02 # m
+        X_ACC = 0.05 # m
         # parameters for limiting robots movement
-        ALPHA_DIST_CLOSE = 0.005 # m
-        ALPHA_RAD_CLOSE = radians(0.5) # radians
+        ALPHA_DIST_CLOSE = 0.05 # m
+        ALPHA_RAD_CLOSE = radians(3) # radians
 
         # how long should the robot sleep
         SLEEP_TIME = 10
@@ -392,7 +392,7 @@ class Main2:
                     
                     # if the ARTag has been lost for too long, 
                     # return that parking was unsuccesful
-                    if rospy.Time.now() - lost_timer > rospy.Duration(5):
+                    if rospy.Time.now() - lost_timer > rospy.Duration(8):
                         print "cant find tag, going to return!"
                         return -1
 
@@ -444,15 +444,6 @@ class Main2:
                     # alpha will be exceptionally high when LL_DIST 
                     # is much greater than ar_z + alpha_dist - only need to park
                     elif abs(alpha) > 100:
-                        print "self ar z"
-                        print self.ar_z
-                        print "beta"
-                        print beta
-                        print "alpha dist"
-                        print alpha_dist
-                        print "alpha"
-                        print alpha
-                        
                         print "dont need to turn - alpha is invalid"
                         self.state2 = MOVE_PERF
                     # regular operation of just turning alpha
@@ -474,7 +465,7 @@ class Main2:
                         if rad2go > ALPHA_RAD_CLOSE: 
                             if theta_org < 0: # robot on left side of ARTag 
                                 rad2go = rad2go * -1
-                            ang_velocity = rad2go * cm.prop_k_rot(rad2go * 0.3)
+                            ang_velocity = rad2go * cm.prop_k_rot(rad2go) * 0.3
                             self.execute_command(self.mover.twist(ang_velocity))
                         else:
                           print "turned alpha"
@@ -526,9 +517,10 @@ class Main2:
                     self.close_VERY = True
 
                     if self.ar_z < CLOSE_DIST * 3:
-                        if abs(self.ar_x) > X_ACC:
-                            self.state2 = ZERO_X
+                        if abs(self.ar_x) > X_ACC *2:
                             almost_perfet = True
+                            self.state2 = ZERO_X
+                            
                     # move to the ARTag     
                     if self.ar_z > CLOSE_DIST:
                         self.execute_command(self.mover.go_forward_K(K_LIN*self.ar_z))
@@ -553,7 +545,7 @@ class Main2:
                 # back out from the ARTag
                 elif self.state2 == BACK_OUT: 
                     print "in back out"
-                    self.position = self.mapper.positionFromMap(self.AR_ids[self.AR_curr][0], self.AR_ids[Home][0])
+                   # self.position = self.mapper.positionFromMap(self.AR_ids[self.AR_curr][0])
                     self.execute_command(self.mover.back_out())
                     if self.ar_z > CLOSE_DIST*2:
                         # set parameters for avoiding obstacles
