@@ -184,11 +184,11 @@ class Main2:
                     sec = 15
 
                 # obstacle while ar_tag not spotted
-                while (self.state == "avoid_obstacle" and self.close == False):
-                    for i in range (2):
-                        self.execute_command(self.mover.avoid_obstacle(self.obs_side))
-                    self.execute_command(self.mover.go_forward())
-                    self.obs_side = 0
+                elif (self.state == "avoid_obstacle" and self.close == False):
+                    while (self.obs_side is not 0):
+                        for i in range (2):
+                            self.execute_command(self.mover.avoid_obstacle(self.obs_side))
+                        self.obs_side = 0
                     self.prev_state = 'avoid_obstacle'
                     self.state = "go_to_pos"
 
@@ -222,11 +222,14 @@ class Main2:
                         dest_orientation = cm.orient(self.mapper.positionToMap(self.position), pos)
                         angle_dif = cm.angle_compare(self.orientation, dest_orientation)
                         if (abs(float(angle_dif)) < abs(math.radians(5)) and self.state is not "bumped"):
-                            self.close_VERY = False
+                            self.close_VERY = False  
                             move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
-                            
                             orienting = False
-                            self.execute_command(move_cmd)
+                            time = 3
+                            if (self.AR_seen):
+                                time = 1
+                            for i in range (time):
+                                self.execute_command(move_cmd)
                         else:
                             self.close_VERY = True
                             # Turn in the relevant direction
