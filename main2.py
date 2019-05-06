@@ -554,10 +554,9 @@ class Main2:
 
                 # back out from the ARTag
                 elif self.state2 == BACK_OUT:  
-                    if self.AR_curr is not Home: 
-                        print "in back out"
-                        self.position = self.mapper.positionFromMap(self.AR_ids[self.AR_curr][0])
-                        self.execute_command(self.mover.back_out())
+                    # CHECK THIS!!!
+                    self.position = self.mapper.positionFromMap(self.AR_ids[self.AR_curr][0], self.AR_ids[Home][0])
+       
                     print "in back out"
                     self.execute_command(self.mover.back_out())
                     if self.ar_z > CLOSE_DIST*3:
