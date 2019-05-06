@@ -1,5 +1,6 @@
 import cool_math as cm
 import math
+import numpy
 
 if __name__ == '__main__':
     h = [0,1,2,3,4]
@@ -360,5 +361,38 @@ if __name__ == '__main__':
 #                     print("degrees alpha: %.2f" % degrees(alpha))
 #                     print("regular alpha: %.2f" % alpha)
 
-state = 1
-print state  - 1
+def valid_list1(my_list, num):
+    """
+    returns True if the last num numbers in a list are different 
+    """
+    if num > len(my_list) + 1:
+        help_list_sz = num - len(my_list)
+        help_list = [0] * help_list_sz
+        my_list = help_list + my_list
+    my_sum = sum( my_list[-num: len(my_list) + 1])
+    avg = my_sum/len(my_list)
+    # list is not valid - not made of values that are being updated 
+    if avg == my_list[-1]:
+        return False
+    else:
+        return True
+
+def valid_list(my_list, num):
+    """
+    returns True if the last num numbers in a list are different 
+    """
+    if num > len(my_list):
+        num = len(my_list) - 1
+    my_sum = sum( my_list[-num: len(my_list) + 1])
+    avg = my_sum/len(my_list)
+    # list is not valid - not made of values that are being updated 
+    if avg == my_list[-1]:
+        return False
+    else:
+        return True
+
+
+a_list = list(numpy.linspace(1, 1.005))
+b_list = [1,1,1]
+# print a_list
+print valid_list(a_list, 52)

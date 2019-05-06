@@ -75,16 +75,16 @@ class Main2:
         self.AR_curr = -1
         # dictionary for ar ids and coordinates
         self.AR_ids = {
-            1: [(0, 17),  2],
-            11: [(15, 18), -5],
-            2: [(4, 24), 1],
-            3: [(45, 24), 1],
-            4: [(31, 10), 0],
-            51: [(35, 18), -5], #fake location to get around table
-            5: [(23, 10), -1],
-            61: [(35, 18), -5], #fake location to get around table
-            6: [(23, 8), 2],
-            7: [(9, 5), -1]
+            1: [(0, 17),  2, 1.5],
+            11: [(15, 18), -5, 1.5],
+            2: [(4, 24), 1, .75,],
+            3: [(45, 24), 1, 1.5],
+            4: [(31, 10), 0, 1.5],
+            51: [(35, 18), -5, 1.5], #fake location to get around table
+            5: [(23, 10), -1, 1.5],
+            61: [(35, 18), -5, 1.5], #fake location to get around table
+            6: [(23, 8), 2, 1.5],
+            7: [(9, 5), -1, .75]
         } 
 
         # vector orientation of ARTag relative to robot 
@@ -192,7 +192,7 @@ class Main2:
             if (self.state == 'go_to_pos'):
                 orienting = True 
                 print self.ar_z
-                if (not(self.AR_seen) or self.ar_z >= 1.5):
+                if (not(self.AR_seen) or self.ar_z >= self.AR_ids[self.AR_curr][2]):
                     if (orienting):
                         pos = self.AR_ids[self.AR_curr][0]
                         dest_orientation = cm.orient(self.mapper.positionToMap(self.position), pos)
@@ -223,7 +223,7 @@ class Main2:
                                 self.execute_command(move_cmd)
                             self.AR_curr = (self.AR_curr- 1) / 10
                             orienting = True
-                if (self.AR_seen and self.ar_z < 1.5):
+                if (self.AR_seen and self.ar_z < self.AR_ids[self.AR_curr][0]):
                     print "see AR"
                     self.sounds.publish(Sound.ON)
                     self.prev_state = 'go_to_pos'
@@ -558,6 +558,7 @@ class Main2:
         for marker in data.markers:
             if (marker.id == self.AR_curr):
                 self.AR_seen = True
+                self.close = True
                 pos = marker.pose.pose.position # what is this relative to -- robot at that time - who is the origin 
 
                 distance = cm.dist((pos.x, pos.y, pos.z))
@@ -605,11 +606,10 @@ class Main2:
         
         # Save the position and orientation
         pos = data.pose.pose.position
-        extra_pos = [0, 0]
         extra_or = 0
 
 
-        self.position = (pos.x + extra_pos[0], pos.y + extra_pos[1])
+        self.position = (pos.x, pos.y)
         orientation = data.pose.pose.orientation
         list_orientation = [orientation.x, orientation.y, orientation.z, orientation.w]
         self.orientation = tf.transformations.euler_from_quaternion(list_orientation)[-1] - radians(180)
