@@ -292,7 +292,7 @@ class Main2:
         # goal distance between robot and ARTag before perfect parking 
         LL_DIST = 0.5 # m
         # distance between ARTag and robot when robot is almost touching it 
-        CLOSE_DIST = 0.28 # m
+        CLOSE_DIST = 0.23 # m
         # desired accuracy when zeroing in on ARTag 
         X_ACC = 0.07 # m
         # parameters for limiting robots movement
@@ -400,9 +400,9 @@ class Main2:
                     
                     # turn until ar_x is almost 0
                     elif abs(self.ar_x) > X_ACC:
-                        ang_velocity = -self.ar_x * cm.prop_k_rot(self.ar_x)
+                        ang_velocity = self.ar_x * cm.prop_k_rot(self.ar_x)
                         print "velocity in x" + str(ang_velocity)
-                        self.execute_command(self.mover.twist(ang_velocity))
+                        self.execute_command(self.mover.twist(-ang_velocity))
                     
                     # triangulate distances and angles to guide 
                     # robot's parking and move to next state
@@ -499,7 +499,14 @@ class Main2:
                     print "in move perf"
 
                     print "ar_z" + str(self.ar_z)
-                    print "ar_x" + str(self.ar_x)
+                    
+
+                    if self.ar_z < CLOSE_DIST * 3:
+                        print "ar_x" + str(self.ar_x)
+                        if abs(self.ar_x) > X_ACC:
+                            self.state2 = ZERO_X
+                            almost_perfet = True
+
 
                     # move to the ARTag     
                     if self.ar_z > CLOSE_DIST:

@@ -130,8 +130,8 @@ def prop_k_rot(radians_left):
     """
     allows the robot to increase its angular velocity when it is turning a small angle 
     """
-    k_rot = 2.5
-    if abs(radians_left) < 1:
+    k_rot = 1.5
+    if abs(radians_left) < 0.1:
         k_rot = k_rot * 2
     
     return k_rot
