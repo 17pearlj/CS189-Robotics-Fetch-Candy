@@ -31,6 +31,8 @@ from itertools import groupby
 # valid ids for AR Tags
 VALID_IDS = range(18)
 Home = 1
+LEFT = -1
+RIGHT = 1
 
 # states in park(); ie state2
 SEARCHING = 0
@@ -72,17 +74,18 @@ class Main2:
         self.AR_curr = -1
         # dictionary for ar ids and coordinates
         self.AR_ids = {
-            1: [(0, 17),  2, 1.5],
-            11: [(-15, 18), -5, 1.5],
-            2: [(-4, 24), 1, .75,],
-            3: [(-45, 24), 1, 1.5],
-            4: [(-31, 10), 0, 1.5],
-            51: [(-35, 18), -5, 1.5], #fake location to get around table
-            5: [(-23, 10), -1, 1.5],
-            61: [(-35, 18), -5, 1.5], #fake location to get around table
-            6: [(-23, 8), 2, 1.5],
-            7: [(-9, 5), -1, .75]
+            1: [(0, 17),  2, 0.9],
+            11: [(-15, 16), -5, 1.5],
+            2: [(-2, 8), 1, 1,],
+            3: [(-45, 10), 1, 1.5],
+            4: [(-31, 19), 0, 1],
+            51: [(-30, 17), -5, 1.5], #fake location to get around table
+            5: [(-23, 24), -1, 1.5],
+            61: [(-35, 16), -5, 1.5], #fake location to get around table
+            6: [(-23, 26), 2, 1.5],
+            7: [(-9, 29), -1, .75]
         } 
+
 
         # vector orientation of ARTag relative to robot 
         # (usually an obtuse angle)
@@ -94,7 +97,10 @@ class Main2:
         self.ar_z = 0 # m
 
         self.close = False # if there's an obstacle and we are really close to the ar_tag, it's probably another robot
-        self.close_VERY = False # if we are extremely close to the ar_tag, we are just going to park or get bumped
+        self.close_VERY = True # if we are extremely close to the ar_tag, we are just going to park or get bumped
+        
+       
+        self.obs_side = 0 # left -1, right 1
         self.AR_seen = False
             
         # # ---- rospy stuff ----
@@ -107,7 +113,7 @@ class Main2:
         rospy.on_shutdown(self.shutdown)
 
         # Create a publisher which can "talk" to TurtleBot wheels and tell it to move
-        self.cmd_vel = rospy.Publisher('cmd_vel_mux/input/navi',Twist, queue_size=10)
+        self.cmd_vel = rospy.Publisher('wanderer_velocity_smoother/raw_cmd_vel',Twist, queue_size=10)
 
         # Subscribe to robot_pose_ekf for odometry/position information
         rospy.Subscriber('/robot_pose_ekf/odom_combined', PoseWithCovarianceStamped, self.process_ekf)
@@ -173,14 +179,18 @@ class Main2:
                     sec = 5
 
                 # bump when very close to ar_tag
-                elif (self.close_VERY):
+                elif (self.state == "bumped" and self.close_VERY):
                     print "obstacle when very close to ar_tag!!"
                     sec = 15
 
                 # obstacle while ar_tag not spotted
-                elif (self.close == False):
-                    print "obstacle, not close to ar tag"
-                    sec = 5
+                while (self.state == "avoid_obstacle" and self.close == False):
+                    for i in range (2):
+                        self.execute_command(self.mover.avoid_obstacle(self.obs_side))
+                    self.execute_command(self.mover.go_forward())
+                    self.obs_side = 0
+                    self.prev_state = 'avoid_obstacle'
+                    self.state = "go_to_pos"
 
                 # obstacle at point ar_tag spotted
                 else:
@@ -194,6 +204,7 @@ class Main2:
             # wait stage (beginning and end)
             if (self.state == 'wait'):
                 # just wait around 
+                self.close_VERY = True
                 move_cmd = self.mover.wait()
                 if (self.AR_curr != -1):
                     print "changing state to go_to_pos"
@@ -211,18 +222,21 @@ class Main2:
                         dest_orientation = cm.orient(self.mapper.positionToMap(self.position), pos)
                         angle_dif = cm.angle_compare(self.orientation, dest_orientation)
                         if (abs(float(angle_dif)) < abs(math.radians(5)) and self.state is not "bumped"):
+                            self.close_VERY = False
                             move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
-                            print "forward 1"
+                            
                             orienting = False
                             self.execute_command(move_cmd)
                         else:
+                            self.close_VERY = True
                             # Turn in the relevant direction
                             if angle_dif < 0:
-                                print "left"
+                                
                                 move_cmd = self.mover.go_to_pos("left", self.position, self.orientation)
+                                
                             else:
                                 move_cmd = self.mover.go_to_pos("right", self.position, self.orientation)
-                                print "right"
+                                
                             self.execute_command(move_cmd)
                             
                     if (not orienting):
@@ -502,6 +516,8 @@ class Main2:
 
                 # move in a straight line to the ar tag 
                 elif self.state2 == MOVE_PERF:
+                    self.close = False
+                    self.close_VERY = True
                     print "in move perf"
 
                     print "ar_z" + str(self.ar_z)
@@ -519,22 +535,24 @@ class Main2:
                         self.execute_command(self.mover.go_forward_K(K_LIN*self.ar_z))
                     else:
                         # set parameters for avoiding obstacles
-                        self.close = False
-                        self.close_VERY = True
+
                         self.state2 = SLEEPING
 
 
                 # wait to recieve package 
                 elif self.state2 == SLEEPING:
-                    print "in sleeping"
-                    sleep_count+=1
-                    rospy.sleep(1)
-                    if sleep_count > SLEEP_TIME:
-                        self.state2 = BACK_OUT
+                    if (self.AR_curr is HOME):
+                        return 0
+                    else:
+                        print "in sleeping"
+                        sleep_count+=1
+                        rospy.sleep(1)
+                        if sleep_count > SLEEP_TIME:
+                            self.state2 = BACK_OUT
 
 
                 # back out from the ARTag
-                elif self.state2 == BACK_OUT:  
+                elif self.state2 == BACK_OUT: 
                     print "in back out"
                     self.position = self.mapper.positionFromMap(self.AR_ids[self.AR_curr][0])
                     self.execute_command(self.mover.back_out())
@@ -658,12 +676,15 @@ class Main2:
             # obstacle must be even larger to get the state to be switched 
             if (w*h > 400):
                 if (self.close_VERY == False):
+                    if (x < 220):
+                        self.obs_side = LEFT
+                    else:
+                        self.obs_side = RIGHT
                     print "avoiding obstacle"
                     self.prev_state = self.state
                     self.state = 'avoid_obstacle'
  
-                else:
-                    print "obstacle seen, not being avoided"       
+                      
 
         return img
 
@@ -678,9 +699,9 @@ class Main2:
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data)
 
-            mask = cv2.inRange(cv_image, 0.1, .3)
-            mask[:, 0:140] = 0
-            mask[:, 500:] = 0
+            mask = cv2.inRange(cv_image, 0.1, 0.5)
+            mask[:, 0:180] = 0
+            mask[:, 460:] = 0
             # create a mask to restrict the depth that can be seen 
             im_mask = cv2.bitwise_and(cv_image, cv_image, mask=mask)
             self.depth_image = im_mask
