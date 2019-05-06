@@ -392,7 +392,49 @@ def valid_list(my_list, num):
         return True
 
 
-a_list = list(numpy.linspace(1, 1.005))
-b_list = [1,1,1]
-# print a_list
-print valid_list(a_list, 52)
+# a_list = list(numpy.linspace(1, 1.005))
+# b_list = [1,1,1]
+# # print a_list
+# print valid_list(a_list, 52)
+
+
+# # invalid alpha
+# self ar z
+# 0.830172838252
+# beta
+# 0.196133282236
+# alpha dist
+# 0.328382937034
+# alpha
+# -1000
+
+# alpha = cm.get_angle_ab(self.ar_z, alpha_dist, LL_DIST)
+
+
+def get_angle_ab(a, b, c):
+    """
+    returns angle in radians that is between a and b given three sides 
+    """
+    a = abs(a)
+    b = abs(b)
+    c = abs(c)
+    if (a != 0 and b != 0 ):
+        top = (a**2 + b**2) - c**2
+        print top
+        if top != 0:
+            bottom = 2 * a * b
+            both = top/bottom
+            if abs(both) > 1:
+                both = 1
+            elif abs(both) < -1:
+                both = -1
+            return math.acos(both)
+        else:
+            return -1000
+    else:
+            return -1000
+
+
+print math.degrees(get_angle_ab(0.1805381120, 0.1451298047, 1.1) )
+print math.degrees(math.acos(1))
+print math.degrees(math.acos(-1))
