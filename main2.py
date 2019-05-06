@@ -484,7 +484,7 @@ class Main2:
                         self.execute_command(self.mover.go_forward_K(K_LIN*alpha_dist))
                         print "dist2go in move alpha " + str(dist2go)
                     # dont need to do this anymore, right up agains AR_TAG
-                    elif self.ar_z =< CLOSE_DIST:
+                    elif self.ar_z <= CLOSE_DIST:
                          print "close-- "
                          self.state2 = MOVE_PERF
 
