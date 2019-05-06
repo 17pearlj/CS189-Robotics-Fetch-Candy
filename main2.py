@@ -310,14 +310,14 @@ class Main2:
         """
 
         # goal distance between robot and ARTag before perfect parking 
-        LL_DIST = 0.5 # m
+        LL_DIST = 0.9 # m
         # distance between ARTag and robot when robot is almost touching it 
         CLOSE_DIST = 0.23 # m
         # desired accuracy when zeroing in on ARTag 
-        X_ACC = 0.07 # m
+        X_ACC = 0.02 # m
         # parameters for limiting robots movement
         ALPHA_DIST_CLOSE = 0.01 # m
-        ALPHA_RAD_CLOSE = radians(0.8) # radians
+        ALPHA_RAD_CLOSE = radians(0.5) # radians
 
         # how long should the robot sleep
         SLEEP_TIME = 10
