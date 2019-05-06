@@ -75,17 +75,18 @@ class Main2:
         self.AR_curr = -1
         # dictionary for ar ids and coordinates
         self.AR_ids = {
-            1: [(0, 17),  2, 0.9],
-            11: [(-15, 16), -5, 1.5],
-            2: [(-2, 8), 1, 1,],
-            3: [(-20, 8), 1, 0.8],
-            4: [(-31, 19), 0, 1],
-            51: [(-30, 19), -5, 1.5], #fake location to get around table
-            5: [(-23, 24), -1, 1.5],
-            61: [(-31, 25), -5, 1.5], #fake location to get around table
-            6: [(-15, 26), 2, 0.9],
-            7: [(-9, 29), -1, .75]
+            1: [(0, 0),  2, 0.9],
+            11: [(-13, -1), -5, 1.5],
+            2: [(-2, -9), 1, 1,],
+            3: [(-18, -9), 1, 0.8],
+            4: [(-31, -1), 0, 1],
+            51: [(-30, 1), -5, 1.5], #fake location to get around table
+            5: [(-23, 10), -1, 1.5],
+            61: [(-31, 8), -5, 1.5], #fake location to get around table
+            6: [(-15, 7), 2, 0.9],
+            7: [(-9, 10), -1, .75]
         } 
+
 
 
         # vector orientation of ARTag relative to robot 
