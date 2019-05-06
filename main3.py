@@ -76,15 +76,15 @@ class Main2:
         # dictionary for ar ids and coordinates
         self.AR_ids = {
             1: [(0, 17),  2, 1.5],
-            11: [(15, 18), -5, 1.5],
-            2: [(4, 24), 1, .75,],
-            3: [(45, 24), 1, 1.5],
-            4: [(31, 10), 0, 1.5],
-            51: [(35, 18), -5, 1.5], #fake location to get around table
-            5: [(23, 10), -1, 1.5],
-            61: [(35, 18), -5, 1.5], #fake location to get around table
-            6: [(23, 8), 2, 1.5],
-            7: [(9, 5), -1, .75]
+            11: [(-15, 18), -5, 1.5],
+            2: [(-4, 24), 1, .75,],
+            3: [(-45, 24), 1, 1.5],
+            4: [(-31, 10), 0, 1.5],
+            51: [(-35, 18), -5, 1.5], #fake location to get around table
+            5: [(-23, 10), -1, 1.5],
+            61: [(-35, 18), -5, 1.5], #fake location to get around table
+            6: [(-23, 8), 2, 1.5],
+            7: [(-9, 5), -1, .75]
         } 
 
         # vector orientation of ARTag relative to robot 
@@ -604,7 +604,7 @@ class Main2:
         self.position = (pos.x, pos.y)
         orientation = data.pose.pose.orientation
         list_orientation = [orientation.x, orientation.y, orientation.z, orientation.w]
-        self.orientation = tf.transformations.euler_from_quaternion(list_orientation)[-1] - radians(180)
+        self.orientation = tf.transformations.euler_from_quaternion(list_orientation)[-1] 
 
 
     #   OBSTACLE TWEAKING: the range of obstacle depth detected, the width of camera, area of obstacle      
