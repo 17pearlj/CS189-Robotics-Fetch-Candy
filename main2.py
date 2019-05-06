@@ -307,7 +307,7 @@ class Main2:
 
 
 
-def park(self):
+    def park(self):
         """
         - Control the parking that the robot does
         :return: None
