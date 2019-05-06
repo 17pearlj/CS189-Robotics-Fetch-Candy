@@ -77,7 +77,7 @@ class Main2:
             1: [(0, 17),  2, 0.9],
             11: [(-15, 16), -5, 1.5],
             2: [(-2, 8), 1, 1,],
-            3: [(-20, 8), 1, 0.9],
+            3: [(-20, 8), 1, 0.8],
             4: [(-31, 19), 0, 1],
             51: [(-30, 19), -5, 1.5], #fake location to get around table
             5: [(-23, 24), -1, 1.5],
@@ -310,13 +310,13 @@ class Main2:
         """
 
         # goal distance between robot and ARTag before perfect parking 
-        LL_DIST = 0.9 # m
+        LL_DIST = 1.1 # m
         # distance between ARTag and robot when robot is almost touching it 
         CLOSE_DIST = 0.23 # m
         # desired accuracy when zeroing in on ARTag 
         X_ACC = 0.02 # m
         # parameters for limiting robots movement
-        ALPHA_DIST_CLOSE = 0.01 # m
+        ALPHA_DIST_CLOSE = 0.005 # m
         ALPHA_RAD_CLOSE = radians(0.5) # radians
 
         # how long should the robot sleep
@@ -414,7 +414,6 @@ class Main2:
                     # turn until ar_x is almost 0
                     elif abs(self.ar_x) > X_ACC:
                         ang_velocity = self.ar_x * cm.prop_k_rot(self.ar_x)
-                        print "velocity in x" + str(ang_velocity)
                         self.execute_command(self.mover.twist(-ang_velocity))
                     
                     # triangulate distances and angles to guide 
@@ -485,7 +484,6 @@ class Main2:
                     # turn to face ARTag before moving directly to it 
                     else: 
                         print "alpha dist reached!"
-                        print "ar_x" + str(self.ar_x)
                         del past_pos [:] # clear list of past positions
                         
                         # check if the ARTag data is valid before zeroing x
@@ -501,9 +499,9 @@ class Main2:
 
                 # move in a straight line to the ar tag 
                 elif self.state2 == MOVE_PERF:
+                    print "in move perf"
                     self.close = False
                     self.close_VERY = True
-                    print "ar_z" + str(self.ar_z)
 
                     if self.ar_z < CLOSE_DIST * 3:
                         if abs(self.ar_x) > X_ACC:
