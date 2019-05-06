@@ -79,10 +79,10 @@ class Main2:
             2: [(-2, 8), 1, 1,],
             3: [(-45, 10), 1, 1.5],
             4: [(-31, 19), 0, 1],
-            51: [(-30, 17), -5, 1.5], #fake location to get around table
+            51: [(-30, 19), -5, 1.5], #fake location to get around table
             5: [(-23, 24), -1, 1.5],
-            61: [(-35, 16), -5, 1.5], #fake location to get around table
-            6: [(-23, 26), 2, 1.5],
+            61: [(-31, 25), -5, 1.5], #fake location to get around table
+            6: [(-15, 26), 2, 0.9],
             7: [(-9, 29), -1, .75]
         } 
 
@@ -541,7 +541,7 @@ class Main2:
 
                 # wait to recieve package 
                 elif self.state2 == SLEEPING:
-                    if (self.AR_curr is HOME):
+                    if (self.AR_curr is Home):
                         return 0
                     else:
                         print "in sleeping"
