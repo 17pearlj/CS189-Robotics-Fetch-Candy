@@ -11,6 +11,7 @@
     <!-- Launch Turtlebot -->
     <include file="$(find turtlebot_bringup)/launch/minimal.launch" />
     <include file="$(find turtlebot_bringup)/launch/3dsensor.launch" />
+    <include file="velocity_smoother.launch.xml" />
 
     <!-- Parameters used by Alvar AR tag tracking -->
     <arg name="marker_size"          default="5.0" />

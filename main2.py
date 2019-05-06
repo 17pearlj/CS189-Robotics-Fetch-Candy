@@ -96,6 +96,10 @@ class Main2:
 
         self.close = False # if there's an obstacle and we are really close to the ar_tag, it's probably another robot
         self.close_VERY = True # if we are extremely close to the ar_tag, we are just going to park or get bumped
+        
+        LEFT = -1
+        RIGHT = 1
+        self.obs_side = 0 # left -1, right 1
         self.AR_seen = False
             
         # # ---- rospy stuff ----
@@ -108,7 +112,7 @@ class Main2:
         rospy.on_shutdown(self.shutdown)
 
         # Create a publisher which can "talk" to TurtleBot wheels and tell it to move
-        self.cmd_vel = rospy.Publisher('cmd_vel_mux/input/navi',Twist, queue_size=10)
+        self.cmd_vel = rospy.Publisher('wanderer_velocity_smoother/raw_cmd_vel',Twist, queue_size=10)
 
         # Subscribe to robot_pose_ekf for odometry/position information
         rospy.Subscriber('/robot_pose_ekf/odom_combined', PoseWithCovarianceStamped, self.process_ekf)
@@ -174,14 +178,18 @@ class Main2:
                     sec = 5
 
                 # bump when very close to ar_tag
-                elif (self.close_VERY):
+                elif (self.state == "bumped" and self.close_VERY):
                     print "obstacle when very close to ar_tag!!"
                     sec = 15
 
                 # obstacle while ar_tag not spotted
-                elif (self.close == False):
-                    print "obstacle, not close to ar tag"
-                    sec = 5
+                while (self.state = "avoid_obstacle" and self.close == False):
+                    for i in range (2):
+                        self.execute_command(self.mover.avoid_obstacle(self.obs_side))
+                    self.execute_command(self.mover.go_forward())
+                    self.obs_side = 0
+                    self.prev_state = 'avoid_obstacle'
+                    self.state = "go_to_pos"
 
                 # obstacle at point ar_tag spotted
                 else:
@@ -665,6 +673,10 @@ class Main2:
             # obstacle must be even larger to get the state to be switched 
             if (w*h > 400):
                 if (self.close_VERY == False):
+                    if (x < 220):
+                        self.obs_side = LEFT
+                    else:
+                        self.obs_side = RIGHT
                     print "avoiding obstacle"
                     self.prev_state = self.state
                     self.state = 'avoid_obstacle'
