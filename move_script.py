@@ -27,7 +27,7 @@ class MoveMaker:
 
     #--------Simple Moves ------#
     def back_out(self):
-        self.move_cmd.linear.x = -LIN_SPEED*2
+        self.move_cmd.linear.x = -LIN_SPEED
         self.move_cmd.angular.z = 0
         return self.move_cmd
 
@@ -52,7 +52,7 @@ class MoveMaker:
         self.move_cmd.angular.z = 0
         return self.move_cmd
     
-    def twist(self, my_angle):
+    def twist_k(self, my_angle):
         ang_vel = abs(min(max(abs(my_angle*ROT_K), 0.1), 0.7))
         ang_vel = cm.sign(my_angle)*ang_vel
     
@@ -63,7 +63,7 @@ class MoveMaker:
         self.move_cmd.linear.x = 0
         return self.move_cmd
 
-    def twist_dir(self, my_vel):
+    def twist(self, my_vel):
         self.move_cmd.angular.z = my_vel
         self.move_cmd.linear.x = 0
         return self.move_cmd
