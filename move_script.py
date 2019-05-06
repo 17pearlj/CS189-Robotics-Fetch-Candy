@@ -11,7 +11,7 @@ from geometry_msgs.msg import Twist
 LIN_SPEED = 0.1 # m/s
 ROT_SPEED = math.radians(15)  # 45 deg/s in radians/s
 ROT_SPEED_2 = math.radians(45)  # 45 deg/s in radians/s
-ROT_K = 5  # Constant for proportional angular velocity control
+ROT_K = 2.5  # Constant for proportional angular velocity control
 LIN_K = 0.5  # Constant for proportional linear velocity control
 
     
@@ -53,8 +53,18 @@ class MoveMaker:
         return self.move_cmd
     
     def twist(self, my_angle):
+        ang_vel = abs(min(max(abs(my_angle*ROT_K), 0.1), 0.7))
+        ang_vel = cm.sign(my_angle)*ang_vel
+    
+        print "my_angle*rotk " + str(my_angle*ROT_K)
+        print "ang vel " + str(ang_vel)
 
-        self.move_cmd.angular.z = my_angle
+        self.move_cmd.angular.z = ang_vel
+        self.move_cmd.linear.x = 0
+        return self.move_cmd
+
+    def twist_dir(self, my_vel):
+        self.move_cmd.angular.z = my_vel
         self.move_cmd.linear.x = 0
         return self.move_cmd
     
