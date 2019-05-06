@@ -186,11 +186,11 @@ class Main2:
 
                 # obstacle while ar_tag not spotted
                 elif (self.state == "avoid_obstacle" and self.close == False):
-                    while (self.obs_side is not 0):
+                    if (self.obs_side is not 0):
                         for i in range (2):
                             self.execute_command(self.mover.avoid_obstacle(self.obs_side))
                         self.obs_side = 0
-                    self.execute_command(self.mover.go_forward())
+                    
                     self.prev_state = 'avoid_obstacle'
                     self.state = "go_to_pos"
 
@@ -315,7 +315,7 @@ class Main2:
         """
 
         # goal distance between robot and ARTag before perfect parking 
-        LL_DIST = 1.1 # m
+        LL_DIST = 0.5 # m
         # distance between ARTag and robot when robot is almost touching it 
         CLOSE_DIST = 0.23 # m
         # desired accuracy when zeroing in on ARTag 
@@ -365,6 +365,7 @@ class Main2:
                 if self.state2 is SEARCHING and len(self.markers) > 0:
                     # used to decide what side of the robot the ARTag is on
                     theta_org = self.ar_orientation
+                    print "found the tag"
 
                     # using the magnitude of the small angle 
                     # between the robot and ARTag, beta, for most calculations 
@@ -462,6 +463,11 @@ class Main2:
                         past_orr.append(self.orientation)
                         dif =  cm.angle_compare(self.orientation,past_orr[0])
                         rad2go = abs(alpha) - abs(dif)
+
+                        print "alpha"
+                        print degrees(alpha)
+                        print "rad2go"
+                        print degrees(rad2go)
                         
 
                         # want to always turn away from the ARTag until 
@@ -469,8 +475,8 @@ class Main2:
                         if rad2go > ALPHA_RAD_CLOSE: 
                             if theta_org < 0: # robot on left side of ARTag 
                                 rad2go = rad2go * -1
-                            ang_velocity = rad2go * cm.prop_k_rot(rad2go)
-                            self.execute_command(self.mover.twist(ang_velocity)) 
+                            ang_velocity = rad2go * cm.prop_k_rot(rad2go * 0.3)
+                            self.execute_command(self.mover.twist(ang_velocity))
                         else:
                           print "turned alpha"
                           del past_orr [:] # clear list of past orientations
