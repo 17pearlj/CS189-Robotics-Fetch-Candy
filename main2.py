@@ -189,6 +189,7 @@ class Main2:
                         for i in range (2):
                             self.execute_command(self.mover.avoid_obstacle(self.obs_side))
                         self.obs_side = 0
+                    self.execute_command(self.mover.go_forward())
                     self.prev_state = 'avoid_obstacle'
                     self.state = "go_to_pos"
 
