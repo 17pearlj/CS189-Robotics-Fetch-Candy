@@ -315,13 +315,13 @@ class Main2:
         """
 
         # goal distance between robot and ARTag before perfect parking 
-        LL_DIST = 0.9 # m
+        LL_DIST = 1.1 # m
         # distance between ARTag and robot when robot is almost touching it 
         CLOSE_DIST = 0.23 # m
         # desired accuracy when zeroing in on ARTag 
         X_ACC = 0.02 # m
         # parameters for limiting robots movement
-        ALPHA_DIST_CLOSE = 0.01 # m
+        ALPHA_DIST_CLOSE = 0.005 # m
         ALPHA_RAD_CLOSE = radians(0.5) # radians
 
         # how long should the robot sleep
@@ -419,12 +419,12 @@ class Main2:
                     # turn until ar_x is almost 0
                     elif abs(self.ar_x) > X_ACC:
                         ang_velocity = self.ar_x * cm.prop_k_rot(self.ar_x)
-                        print "velocity in x" + str(ang_velocity)
                         self.execute_command(self.mover.twist(-ang_velocity))
                     
                     # triangulate distances and angles to guide 
                     # robot's parking and move to next state
                     else: 
+                        print "zeroed x"
                         if almost_perfet == True:
                             almost_perfet = False
                             self.state2 = MOVE_PERF
@@ -463,6 +463,7 @@ class Main2:
                             ang_velocity = rad2go * cm.prop_k_rot(rad2go)
                             self.execute_command(self.mover.twist(ang_velocity)) 
                         else:
+                          print "turned alpha"
                           del past_orr [:] # clear list of past orientations
                           self.execute_command(self.mover.stop())
                           self.state2 = MOVE_ALPHA
@@ -480,17 +481,17 @@ class Main2:
                     dist2go = abs(alpha_dist) - abs(dist_traveled)
 
                     # travel until the alpha_dist has been moved - need this to be very accurate
-                    if dist2go > ALPHA_DIST_CLOSE and dist2go > CLOSE_DIST*2.5:
+                    if dist2go > ALPHA_DIST_CLOSE and dist2go > CLOSE_DIST*:
                         self.execute_command(self.mover.go_forward_K(K_LIN*alpha_dist))
                         print "dist2go in move alpha " + str(dist2go)
                     # dont need to do this anymore, right up agains AR_TAG
-                    elif self.ar_z < CLOSE_DIST*2.5:
+                    elif self.ar_z =< CLOSE_DIST:
+                         print "close-- "
                          self.state2 = MOVE_PERF
 
                     # turn to face ARTag before moving directly to it 
                     else: 
                         print "alpha dist reached!"
-                        print "ar_x" + str(self.ar_x)
                         del past_pos [:] # clear list of past positions
                         
                         # check if the ARTag data is valid before zeroing x
@@ -506,9 +507,9 @@ class Main2:
 
                 # move in a straight line to the ar tag 
                 elif self.state2 == MOVE_PERF:
+                    print "in move perf"
                     self.close = False
                     self.close_VERY = True
-                    print "ar_z" + str(self.ar_z)
 
                     if self.ar_z < CLOSE_DIST * 3:
                         if abs(self.ar_x) > X_ACC:
