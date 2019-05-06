@@ -76,10 +76,10 @@ class Main2:
         self.AR_ids = {
             1: [(0, 17),  2, 0.9],
             11: [(-15, 16), -5, 1.5],
-            2: [(-4, 10), 1, .75,],
+            2: [(-2, 8), 1, 1,],
             3: [(-45, 10), 1, 1.5],
             4: [(-31, 19), 0, 1],
-            51: [(-35, 16), -5, 1.5], #fake location to get around table
+            51: [(-30, 17), -5, 1.5], #fake location to get around table
             5: [(-23, 24), -1, 1.5],
             61: [(-35, 16), -5, 1.5], #fake location to get around table
             6: [(-23, 26), 2, 1.5],
@@ -224,19 +224,19 @@ class Main2:
                         if (abs(float(angle_dif)) < abs(math.radians(5)) and self.state is not "bumped"):
                             self.close_VERY = False
                             move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
-                            print "forward 1"
+                            
                             orienting = False
                             self.execute_command(move_cmd)
                         else:
                             self.close_VERY = True
                             # Turn in the relevant direction
                             if angle_dif < 0:
-                                print "left"
+                                
                                 move_cmd = self.mover.go_to_pos("left", self.position, self.orientation)
                                 
                             else:
                                 move_cmd = self.mover.go_to_pos("right", self.position, self.orientation)
-                                print "right"
+                                
                             self.execute_command(move_cmd)
                             
                     if (not orienting):
@@ -541,23 +541,25 @@ class Main2:
 
                 # wait to recieve package 
                 elif self.state2 == SLEEPING:
-                    print "in sleeping"
-                    sleep_count+=1
-                    rospy.sleep(1)
-                    if sleep_count > SLEEP_TIME:
-                        self.state2 = BACK_OUT
+                    if (self.AR_curr is HOME):
+                        return 0
+                    else:
+                        print "in sleeping"
+                        sleep_count+=1
+                        rospy.sleep(1)
+                        if sleep_count > SLEEP_TIME:
+                            self.state2 = BACK_OUT
 
 
                 # back out from the ARTag
                 elif self.state2 == BACK_OUT: 
-                    if self.AR_curr is not Home: 
-                        print "in back out"
-                        self.position = self.mapper.positionFromMap(self.AR_ids[self.AR_curr][0])
-                        self.execute_command(self.mover.back_out())
-                        if self.ar_z > CLOSE_DIST*3:
-                            # set parameters for avoiding obstacles
-                            self.close_VERY = False
-                            self.state2 = DONE_PARKING
+                    print "in back out"
+                    self.position = self.mapper.positionFromMap(self.AR_ids[self.AR_curr][0])
+                    self.execute_command(self.mover.back_out())
+                    if self.ar_z > CLOSE_DIST*3:
+                        # set parameters for avoiding obstacles
+                        self.close_VERY = False
+                        self.state2 = DONE_PARKING
 
 
                 # done with the parking sequence!
@@ -682,8 +684,7 @@ class Main2:
                     self.prev_state = self.state
                     self.state = 'avoid_obstacle'
  
-                else:
-                    print "obstacle seen, not being avoided"       
+                      
 
         return img
 
