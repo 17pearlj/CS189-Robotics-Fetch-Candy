@@ -187,7 +187,7 @@ class Main2:
 
                 # obstacle while ar_tag not spotted
                 elif (self.state == "avoid_obstacle" and self.close == False):
-                    for i in range (3):
+                    for i in range (5):
                         self.execute_command(self.mover.avoid_obstacle(self.obs_side))
                     sec = 2
                     self.prev_state = 'avoid_obstacle'
