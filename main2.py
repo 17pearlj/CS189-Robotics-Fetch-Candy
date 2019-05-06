@@ -75,16 +75,16 @@ class Main2:
         self.AR_curr = -1
         # dictionary for ar ids and coordinates
         self.AR_ids = {
-            1: [(0, 17),  2, 0.9],
-            11: [(-15, 16), -5, 1.5],
-            2: [(-2, 8), 1, 1,],
-            3: [(-20, 8), 1, 0.8],
-            4: [(-31, 19), 0, 1],
-            51: [(-30, 19), -5, 1.5], #fake location to get around table
-            5: [(-23, 24), -1, 1.5],
-            61: [(-31, 25), -5, 1.5], #fake location to get around table
-            6: [(-15, 26), 2, 0.9],
-            7: [(-9, 29), -1, .75]
+            1: [(0, 0),  2, 0.9],
+            11: [(-13, -1), -5, 1.5],
+            2: [(-2, -9), 1, 1,],
+            3: [(-18, -9), 1, 0.8],
+            4: [(-31, -1), 0, 1],
+            51: [(-30, 1), -5, 1.5], #fake location to get around table
+            5: [(-23, 10), -1, 1.5],
+            61: [(-31, 8), -5, 1.5], #fake location to get around table
+            6: [(-15, 7), 2, 0.9],
+            7: [(-9, 10), -1, .75]
         } 
 
 
@@ -160,6 +160,8 @@ class Main2:
         # get ar_tag desired from argument
         past_xs = []
         self.AR_curr = int(sys.argv[1])
+        Home = int(sys.argv[2])
+        
         
         # treat obstacle cases 5 and 6
         if (self.AR_curr == 5 or self.AR_curr == 6):
@@ -170,7 +172,6 @@ class Main2:
 
             #bumped or obstacle scenarios:
             if (self.state is "bumped" or self.state is "avoid_obstacle"):
-                print "HI"
                 self.sounds.publish(Sound.ON)
                 sec = 0
 
@@ -186,11 +187,9 @@ class Main2:
 
                 # obstacle while ar_tag not spotted
                 elif (self.state == "avoid_obstacle" and self.close == False):
-                    while (self.obs_side is not 0):
-                        for i in range (2):
-                            self.execute_command(self.mover.avoid_obstacle(self.obs_side))
-                        self.obs_side = 0
-                    self.execute_command(self.mover.go_forward())
+                    for i in range (3):
+                        self.execute_command(self.mover.avoid_obstacle(self.obs_side))
+                    sec = 2
                     self.prev_state = 'avoid_obstacle'
                     self.state = "go_to_pos"
 
@@ -221,7 +220,7 @@ class Main2:
                 if (not(self.AR_seen) or self.ar_z >= self.AR_ids[self.AR_curr][2]):
                     if (orienting):
                         pos = self.AR_ids[self.AR_curr][0]
-                        dest_orientation = cm.orient(self.mapper.positionToMap(self.position), pos)
+                        dest_orientation = cm.orient(self.mapper.positionToMap(self.position, self.AR_ids[Home][0]), pos)
                         angle_dif = cm.angle_compare(self.orientation, dest_orientation)
                         if (abs(float(angle_dif)) < abs(math.radians(5)) and self.state is not "bumped"):
                             self.close_VERY = False  
@@ -367,6 +366,7 @@ class Main2:
 
                     # used to decide what side of the robot the ARTag is on
                     theta_org = self.ar_orientation
+                    print "found the tag"
 
                     # using the magnitude of the small angle 
                     # between the robot and ARTag, beta, for most calculations 
@@ -395,7 +395,7 @@ class Main2:
                     
                     # if the ARTag has been lost for too long, 
                     # return that parking was unsuccesful
-                    if rospy.Time.now() - lost_timer > rospy.Duration(5):
+                    if rospy.Time.now() - lost_timer > rospy.Duration(8):
                         print "cant find tag, going to return!"
                         return -1
 
@@ -560,6 +560,10 @@ class Main2:
                         self.position = self.mapper.positionFromMap(self.AR_ids[self.AR_curr][0])
                         self.execute_command(self.mover.back_out())
                     print "in back out"
+<<<<<<< HEAD
+=======
+                   # self.position = self.mapper.positionFromMap(self.AR_ids[self.AR_curr][0])
+>>>>>>> b50febee5a80a8310e66787134b2456bff063114
                     self.execute_command(self.mover.back_out())
                     if self.ar_z > CLOSE_DIST*3:
                         # set parameters for avoiding obstacles
