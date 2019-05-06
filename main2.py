@@ -289,7 +289,7 @@ class Main2:
             self.rate.sleep()
 
 
-    def park(self):
+        def park(self):
         """
         - Control the parking that the robot does
         :return: None
@@ -533,6 +533,10 @@ class Main2:
                 # back out from the ARTag
                 elif self.state2 == BACK_OUT:  
                     print "in back out"
+                    self.position = self.mapper.positionFromMap(self.AR_ids[self.AR_curr][0])
+                    self.orientation = radians(self.AR_ids[self.AR_curr][1] * 90)
+                    print "my position %s" % str(self.mapper.positionToMap(self.position)) 
+                    print "my orientation %d" % self.orientation                    
                     self.execute_command(self.mover.back_out())
                     if self.ar_z > CLOSE_DIST*3:
                         # set parameters for avoiding obstacles
@@ -548,7 +552,6 @@ class Main2:
                     return 0
 
                 self.rate.sleep()
-
 
     # ------------------ Functions telling us about the robot ---------------- #     
 

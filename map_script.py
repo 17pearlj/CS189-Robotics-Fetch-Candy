@@ -35,8 +35,8 @@ class MapMaker:
         (x, y) -> (r c)
         """
 
-        step_x = (position[0] - 2) * world_map_ratio
-        step_y = (position[1] - 15) * world_map_ratio
+        step_x = (position[0] - 0) * world_map_ratio
+        step_y = (position[1] - 17) * world_map_ratio
         
         return (step_x, step_y)
 
