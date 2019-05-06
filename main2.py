@@ -149,27 +149,40 @@ class Main2:
         - Run until Ctrl+C pressed
         :return: None
         """
+
+        # get ar_tag desired from argument
         past_xs = []
         self.AR_curr = int(sys.argv[1])
+
+        # treat obstacle cases 5 and 6
         if (self.AR_curr == 5 or self.AR_curr == 6):
             self.AR_curr = self.AR_curr*10 + 1
+
         while not rospy.is_shutdown():
             move_cmd = Twist()
-            
+
+            #bumped or obstacle scenarios:
             if (self.state is "bumped" or self.state is "avoid_obstacle"):
                 print "HI"
                 self.sounds.publish(Sound.ON)
                 sec = 0
+
+                # bumped when not very close to ar_tag
                 if (self.state == "bumped" and not self.close_VERY):
                     print "bump when not very close to ar_tag"
                     sec = 5
 
+                # bump when very close to ar_tag
                 elif (self.close_VERY):
                     print "obstacle when very close to ar_tag!!"
                     sec = 15
+
+                # obstacle while ar_tag not spotted
                 elif (self.close == False):
                     print "obstacle, not close to ar tag"
                     sec = 5
+
+                # obstacle at point ar_tag spotted
                 else:
                     print "obstacle, moderately close to ar tag"
                     sec = 5
@@ -178,7 +191,7 @@ class Main2:
                 self.state = "go_to_pos"
                 
 
-            
+            # wait stage (beginning and end)
             if (self.state == 'wait'):
                 # just wait around 
                 move_cmd = self.mover.wait()
@@ -187,8 +200,11 @@ class Main2:
                     self.prev_state = 'wait'
                     self.state = 'go_to_pos'
 
+            # go to ekf position
             if (self.state == 'go_to_pos'):
                 orienting = True 
+
+                # orienting stage a
                 if (not(self.AR_seen) or self.ar_z >= self.AR_ids[self.AR_curr][2]):
                     if (orienting):
                         pos = self.AR_ids[self.AR_curr][0]
@@ -643,7 +659,6 @@ class Main2:
             if (w*h > 400):
                 if (self.close_VERY == False):
                     print "avoiding obstacle"
-                    self.execute_command(self.mover.stop())
                     self.prev_state = self.state
                     self.state = 'avoid_obstacle'
  
@@ -692,7 +707,6 @@ class Main2:
         """
         if (data.state == BumperEvent.PRESSED):
             print "BUMP"
-            
             self.prev_state = self.state
             self.state = 'bumped'
             
