@@ -43,8 +43,6 @@ BACK_OUT = 6
 DONE_PARKING = 7
 SEARCHING_2 = -1
 
-
-
 class Main2:
     def __init__(self):
         # information about the robot's current position and orientation relative to start
@@ -98,8 +96,6 @@ class Main2:
         self.close = False # if there's an obstacle and we are really close to the ar_tag, it's probably another robot
         self.close_VERY = False # if we are extremely close to the ar_tag, we are just going to park or get bumped
         self.AR_seen = False
-        self.AR_seen_real = False
-        self.main_past_xs = []
             
         # # ---- rospy stuff ----
         # Initialize the node
@@ -153,7 +149,7 @@ class Main2:
         - Run until Ctrl+C pressed
         :return: None
         """
-
+        past_xs = []
         self.AR_curr = int(sys.argv[1])
         if (self.AR_curr == 5 or self.AR_curr == 6):
             self.AR_curr = self.AR_curr*10 + 1
@@ -194,10 +190,11 @@ class Main2:
 
             if (self.state == 'go_to_pos'):
                 orienting = True 
-                
-                
-                while (not(self.AR_seen_real) and self.ar_z > 1.5):
+                print self.ar_z
+
+                while (not(self.AR_seen) or self.ar_z >= 1.5):
                     while (orienting):
+
                         pos = self.AR_ids[self.AR_curr]
                         dest_orientation = cm.orient(self.mapper.positionToMap(self.position), pos)
                         angle_dif = cm.angle_compare(self.orientation, dest_orientation)
@@ -217,7 +214,6 @@ class Main2:
                             self.cmd_vel.publish(move_cmd)
                             self.rate.sleep()
                     else:
-
                         if ((self.AR_curr > 10)):
                             travel_time = 100
                             if (self.AR_curr == (Home*10) + 1):
@@ -232,19 +228,14 @@ class Main2:
                             print "check 4"
                             move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
                             self.execute_command(move_cmd)
-<<<<<<< HEAD
-                if (self.AR_seen_real):
-                    print "AR seen for real!!!"
-                    print self.AR_seen_real
-=======
-                if (self.AR_seen and self.ar_z < 1.5):
+                if (self.AR_seen and self.ar_z >= 1.5):
                     print "see AR"
                     print found_AR_real
->>>>>>> f756dbf0f72a0df49902f0d22b4d67f0310877f4
                     self.sounds.publish(Sound.ON)
                     self.prev_state = 'go_to_pos'
                     self.state = 'go_to_AR'
             
+            # go to the ARTag
             if (self.state == "go_to_AR"): 
                 # parking the robot
                 self.state2 = SEARCHING
@@ -254,13 +245,11 @@ class Main2:
                 if park_check == -1:
                     print "parking unsuccesful - going back to go to pos"
                     self.AR_seen = False
-                    self.AR_seen_real = False
                     self.state = 'go_to_pos'
                 else:
                     # return from handle ar!
                     print "parking succesful"
                     self.AR_seen = False
-                    self.AR_seen_real = False
                     
                     if (self.AR_curr is not Home):
                         if (self.AR_curr == 6 or self.AR_curr == 5):
@@ -295,7 +284,7 @@ class Main2:
             self.rate.sleep()
 
 
-        def park(self):
+    def park(self):
         """
         - Control the parking that the robot does
         :return: None
@@ -304,7 +293,7 @@ class Main2:
         # goal distance between robot and ARTag before perfect parking 
         LL_DIST = 0.5 # m
         # distance between ARTag and robot when robot is almost touching it 
-        CLOSE_DIST = 0.24 # m
+        CLOSE_DIST = 0.28 # m
         # desired accuracy when zeroing in on ARTag 
         X_ACC = 0.07 # m
         # parameters for limiting robots movement
@@ -374,7 +363,7 @@ class Main2:
                     # if ar_x is being updated, then ARTag has been found, 
                     # return to parking TODO: update this name
                     if len(past_xs) > MIN_FOUND_TAGS:
-                        if cm.valid_list(past_xs, 5):
+                        if not any(sum(1 for _ in g) > MAX_LOST_TAGS*0.5 for _, g in groupby(past_xs)):
                             print "found tag again!"
                             osc_count = 0 # clear counter for oscillations
                             del past_xs [:] # clear list of past ar_xs
@@ -383,7 +372,6 @@ class Main2:
                     # if the ARTag has been lost for too long, 
                     # return that parking was unsuccesful
                     if rospy.Time.now() - lost_timer > rospy.Duration(5):
-                        self.AR_seen_real = False
                         print "cant find tag, going to return!"
                         return -1
 
@@ -406,16 +394,15 @@ class Main2:
 
                     # keep track of whether the ARTag is still in view or is lost
                     past_xs.append(self.ar_x)
-                    if len(past_xs) > 10:
-                        if not cm.valid_list(past_xs, 10):
-                            lost_timer = rospy.Time.now() # track how long the ARTag has been lost 
-                            del past_xs [:] # clear list of past ar_xs
-                            self.state2 = SEARCHING_2
+                    if any(sum(1 for _ in g) > MAX_LOST_TAGS for _, g in groupby(past_xs)):
+                        lost_timer = rospy.Time.now() # track how long the ARTag has been lost 
+                        self.state2 = SEARCHING_2
                         
+                    
                     # turn until ar_x is almost 0
                     elif abs(self.ar_x) > X_ACC:
                         ang_velocity = -self.ar_x * cm.prop_k_rot(self.ar_x)
-                        print "velocity in x " + str(ang_velocity)
+                        print "velocity in x" + str(ang_velocity)
                         self.execute_command(self.mover.twist(ang_velocity))
                     
                     # triangulate distances and angles to guide 
@@ -450,13 +437,11 @@ class Main2:
                         # keep track of how much robot has turned 
                         # since it entered 'alpha' state
                         past_orr.append(self.orientation)
-                        dif2 =  abs(self.orientation - past_orr[0])
-                        dif = cm.angle_compare(self.orientation, past_orr[0])
+                        dif =  abs(self.orientation - past_orr[0])
                         rad2go = abs(alpha) - abs(dif)
 
-                        print "dif " + str(degrees(dif))
-                        print "alpha " + str(degrees(alpha))
-                        print "rad2go " + str(degrees(rad2go))
+                        print "dif" + str(degrees(dif))
+                        print "alpha" + degrees(alpha)
                         
 
                         # want to always turn away from the ARTag until 
@@ -499,12 +484,12 @@ class Main2:
                         print "ar_x" + str(self.ar_x)
                         del past_pos [:] # clear list of past positions
                         
-                        # # check if the ARTag data is valid before zeroing x
-                        # if any(sum(1 for _ in g) > MAX_LOST_TAGS*2 for _, g in groupby(past_xs)):
-                        #     lost_timer = rospy.Time.now() # track how long the ARTag has been lost 
-                        #     self.state2 = SEARCHING_2
-                        # # now zero ar_x 
-                        if abs(self.ar_x) > X_ACC:
+                        # check if the ARTag data is valid before zeroing x
+                        if any(sum(1 for _ in g) > MAX_LOST_TAGS*2 for _, g in groupby(past_xs)):
+                            lost_timer = rospy.Time.now() # track how long the ARTag has been lost 
+                            self.state2 = SEARCHING_2
+                        # now zero ar_x 
+                        elif abs(self.ar_x) > X_ACC:
                             self.state2 = ZERO_X
                             almost_perfet = True
                         else:
@@ -539,10 +524,6 @@ class Main2:
                 # back out from the ARTag
                 elif self.state2 == BACK_OUT:  
                     print "in back out"
-                    self.position = self.mapper.positionFromMap(self.AR_ids[self.AR_curr][0])
-                    self.orientation = radians(self.AR_ids[self.AR_curr][1] * 90)
-                    print "my position %s" % str(self.mapper.positionToMap(self.position)) 
-                    print "my orientation %d" % self.orientation                    
                     self.execute_command(self.mover.back_out())
                     if self.ar_z > CLOSE_DIST*3:
                         # set parameters for avoiding obstacles
@@ -558,6 +539,7 @@ class Main2:
                     return 0
 
                 self.rate.sleep()
+
 
     # ------------------ Functions telling us about the robot ---------------- #     
 
@@ -583,10 +565,6 @@ class Main2:
                 list_orientation = [orientation.x, orientation.y, orientation.z, orientation.w]
                 self.ar_orientation = tf.transformations.euler_from_quaternion(list_orientation)[0]
                 self.markers[marker.id] = distance
-
-                self.main_past_xs.append(self.ar_x)
-                if cm.valid_list(self.main_past_xs, 30) == True:
-                    self.AR_seen_real = True
         
     def print_markers(self):
         """
