@@ -12,7 +12,7 @@ class MapMaker:
         # initialize MapDrawer object
         print "map initialized"
         self.mapObj = mp.MapDrawer(self.positionToMap)
-
+        self.calliber = [0, 17]
         # create blank array of negative ones to represent blank map 
         self.my_map = -np.ones((40,30))
         self.position  = [0,0]
@@ -35,8 +35,8 @@ class MapMaker:
         (x, y) -> (r c)
         """
 
-        step_x = (position[0] - 0) * world_map_ratio
-        step_y = (position[1] - 17) * world_map_ratio
+        step_x = (position[0] - self.calliber[0]) * world_map_ratio
+        step_y = (position[1] - self.calliber[1]) * world_map_ratio
         
         return (step_x, step_y)
 

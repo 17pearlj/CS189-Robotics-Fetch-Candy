@@ -57,6 +57,7 @@ class Main2:
         self.mapper.orientation = self.orientation
         # move commands come from imported module 
         self.mover = move_script.MoveMaker()
+        
         self.markers = {}
 
 
@@ -77,7 +78,7 @@ class Main2:
             1: [(0, 17),  2, 0.9],
             11: [(-15, 16), -5, 1.5],
             2: [(-2, 8), 1, 1,],
-            3: [(-45, 10), 1, 1.5],
+            3: [(-20, 8), 1, 0.8],
             4: [(-31, 19), 0, 1],
             51: [(-30, 19), -5, 1.5], #fake location to get around table
             5: [(-23, 24), -1, 1.5],
@@ -159,7 +160,7 @@ class Main2:
         # get ar_tag desired from argument
         past_xs = []
         self.AR_curr = int(sys.argv[1])
-
+        
         # treat obstacle cases 5 and 6
         if (self.AR_curr == 5 or self.AR_curr == 6):
             self.AR_curr = self.AR_curr*10 + 1
