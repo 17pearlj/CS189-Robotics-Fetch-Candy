@@ -59,7 +59,7 @@ class Main2:
         self.mover = move_script.MoveMaker()
         
         self.markers = {}
-
+        self.obstacle = False
 
         # states: wait, go_to_pos, go_to_AR, handle_AR
         self.state = 'wait'
@@ -187,8 +187,11 @@ class Main2:
 
                 # obstacle while ar_tag not spotted
                 elif (self.state == "avoid_obstacle" and self.close == False):
-                    for i in range (5):
-                        self.execute_command(self.mover.avoid_obstacle(self.obs_side))
+                    while(self.obs_side is not 0):
+                        for i in range (2):
+                            self.execute_command(self.mover.avoid_obstacle(self.obs_side))
+                        obs_side = 0
+                    self.execute_command(self.mover.go_forward())
                     sec = 2
                     self.prev_state = 'avoid_obstacle'
                     self.state = "go_to_pos"
@@ -232,7 +235,7 @@ class Main2:
                             for i in range (time):
                                 self.execute_command(move_cmd)
                         else:
-                            self.close_VERY = True
+                            
                             # Turn in the relevant direction
                             if angle_dif < 0:
                                 
@@ -262,6 +265,7 @@ class Main2:
                                 orienting = True
                 if (self.AR_seen and self.ar_z < self.AR_ids[self.AR_curr][2]):
                     print "see AR"
+                    
                     self.sounds.publish(Sound.ON)
                     self.prev_state = 'go_to_pos'
                     self.state = 'go_to_AR'
@@ -269,7 +273,8 @@ class Main2:
             # go to the ARTag
             if (self.state == "go_to_AR"): 
                 # parking the robot
-                self.close = True
+                self.close = False
+                self.close_VERY = True
                 self.state2 = SEARCHING
 
                 park_check = self.park()
@@ -365,7 +370,7 @@ class Main2:
 
         while not rospy.is_shutdown(): 
             while self.state is not "bumped" or self.state is not "avoid_obstacle":
-
+                
                 # only begin parking when the ARTag has been 
                 # located and saved in markers dictionary
                 if self.state2 is SEARCHING and len(self.markers) > 0:
@@ -530,8 +535,7 @@ class Main2:
                     print "in move perf"
 
                     print "ar_z" + str(self.ar_z)
-                    self.close = False
-                    self.close_VERY = True
+                    
 
                     if self.ar_z < CLOSE_DIST * 3:
                         print "ar_x" + str(self.ar_x)
@@ -599,6 +603,7 @@ class Main2:
         for marker in data.markers:
             if (marker.id == self.AR_curr):
                 self.AR_seen = True
+                self.close = True
                 pos = marker.pose.pose.position # what is this relative to -- robot at that time - who is the origin 
 
                 distance = cm.dist((pos.x, pos.y, pos.z))
