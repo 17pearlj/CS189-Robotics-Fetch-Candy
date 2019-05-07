@@ -80,8 +80,8 @@ class Main2:
             2: [(-2, -9), 1, 1,],
             3: [(-18, -9), 1, 0.8],
             4: [(-31, -1), 0, 1],
-            51: [(-30, 1), -5, 1.5], #fake location to get around table
-            5: [(-23, 10), -1, 1.5],
+            51: [(-30, 8), -5, 1.5], #fake location to get around table
+            5: [(-23, 10), -1, .9],
             61: [(-31, 8), -5, 1.5], #fake location to get around table
             6: [(-15, 7), 2, 0.9],
             7: [(-9, 10), -1, .75]
@@ -247,13 +247,19 @@ class Main2:
                         if ((self.AR_curr > 10)):
                             print "big ar tag"
                             travel_time = 100
+                            issue = False
                             if (self.AR_curr == (Home*10) + 1):
                                 travel_time = 20 #check on this
                             for i in range(travel_time):
-                                move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
-                                self.execute_command(move_cmd)
-                            self.AR_curr = (self.AR_curr- 1) / 10
-                            orienting = True
+                                if (self.state is not "bumped" or self.state is not "avoid_obstacle"):  
+                                    move_cmd = self.mover.go_to_pos("forward", self.position, self.orientation)
+                                    self.execute_command(move_cmd)
+                                else:
+                                    issue = True
+                                    break
+                            if (not issue):
+                                self.AR_curr = (self.AR_curr- 1) / 10
+                                orienting = True
                 if (self.AR_seen and self.ar_z < self.AR_ids[self.AR_curr][2]):
                     print "see AR"
                     self.sounds.publish(Sound.ON)
