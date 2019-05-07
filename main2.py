@@ -547,7 +547,10 @@ class Main2:
                         # set parameters for avoiding obstacles
                         self.close = False
                         self.close_VERY = True
-                        self.state2 = SLEEPING
+                        if (self.AR_curr is Home):
+                            self.state = DONE_PARKING
+                        else:
+                            self.state2 = SLEEPING
 
 
                 # wait to recieve package 
