@@ -81,7 +81,7 @@ class MoveMaker:
     
     def avoid_obstacle(self, side):
         self.move_cmd.linear.x = 0
-        self.move_cmd.angular.z = side*ROT_SPEED
+        self.move_cmd.angular.z = side*ROT_SPEED_2
         return self.move_cmd
 
     def go_to_pos(self, str, my_pos, my_orr):
