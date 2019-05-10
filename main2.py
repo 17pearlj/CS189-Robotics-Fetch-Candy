@@ -21,7 +21,7 @@ from cv_bridge import CvBridge, CvBridgeError
 from std_msgs.msg import Empty
 from ar_track_alvar_msgs.msg import AlvarMarkers
 
-#imports for other functions
+# imports for other functions
 import map_script
 import move_script
 import cool_math as cm 
@@ -150,7 +150,16 @@ class Main2:
         # # Subscribe to topic for AR tags
         # rospy.Subscriber('/ar_pose_marker', AlvarMarkers, )
    
-    
+    def execute_command(self, my_move):
+        """
+        - Just a function to decrease repetion when executing move commands
+        :param: a move command with linear and angular velocity set, see move_scipt.py
+        :return: None
+        """
+        if (self.state is not "bumped" or self.state is not "avoid_obstacle"):
+            move_cmd = my_move
+            self.cmd_vel.publish(move_cmd)
+            self.rate.sleep()
     
     def run(self):
         """
@@ -304,30 +313,16 @@ class Main2:
                     self.cmd_vel.publish(move_cmd)
                     self.rate.sleep()
             # self.sounds.publish(Sound.ON)
-                
-            
-
-    
-    def execute_command(self, my_move):
-        """
-        - Just a function to decrease repetion when executing move commands
-        :param: a move command with linear and angular velocity set, see move_scipt.py
-        :return: None
-        """
-        if (self.state is not "bumped" or self.state is not "avoid_obstacle"):
-            move_cmd = my_move
-            self.cmd_vel.publish(move_cmd)
-            self.rate.sleep()
 
 
 
     def park(self):
         """
-        - Control the parking that the robot does
+        - Control the parking that the robot does, has secondary control of the robot's state 
         :return: None
         """
 
-         # goal distance between robot and ARTag before perfect parking 
+        # goal distance between robot and ARTag before perfect parking 
         LL_DIST = 0.5 # m
         # distance between ARTag and robot when robot is almost touching it 
         CLOSE_DIST = 0.23 # m
@@ -337,9 +332,9 @@ class Main2:
         ALPHA_DIST_CLOSE = 0.01 # m
         ALPHA_RAD_CLOSE = radians(0.8) # radians
 
-        # how long should the robot sleep
+        # how long should the robot sleep under the dispenser
         SLEEP_TIME = 10
-        # for hen robot is lost 
+        # for when robot is lost 
         OSC_LIM = 20
 
         # theshold for losing and finding the ARTag
@@ -359,7 +354,7 @@ class Main2:
         # determine robot velocity when lost
         osc_count = 0 
         # keep track of how long robot has been lost 
-        lost_timer = None # s
+        lost_timer = None # seconds
 
         # arrays to save information about robot's history 
         past_orr = []
@@ -416,7 +411,7 @@ class Main2:
                     # maximize chances of finding it again
                     osc_count+=1 
                     osc_count = osc_count % OSC_LIM
-                    if osc_count < OSC_LIM*0.5:  
+                    if osc_count < OSC_LIM * 0.5:  
                         self.execute_command(self.mover.twist(radians(-30)))
                     else:
                         self.execute_command(self.mover.twist(radians(30)))
@@ -536,15 +531,13 @@ class Main2:
                 elif self.state2 == MOVE_PERF:
                     print "in move perf"
 
-                    print "ar_z" + str(self.ar_z)
-                    
+                    print "ar_z" + str(self.ar_z)   
 
-                    if self.ar_z < CLOSE_DIST * 3:
+                    if self.ar_z < CLOSE_DIST * 3 and self.ar_z > CLOSE_DIST * 2:
                         print "ar_x" + str(self.ar_x)
                         if abs(self.ar_x) > X_ACC:
                             self.state2 = ZERO_X
                             almost_perfet = True
-
 
                     # move to the ARTag     
                     if self.ar_z > CLOSE_DIST:

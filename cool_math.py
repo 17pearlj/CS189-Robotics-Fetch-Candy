@@ -103,12 +103,14 @@ def sign(val):
 def third_side(a, b, gamma):
     """
     returns the third side of a triangle given two sides and one angle 
+    using the law of cosines
     """
     return math.sqrt(a**2 + b**2 - (2 * a * b * math.cos(gamma)))
 
 def get_angle_ab(a, b, c):
     """
-    returns angle in radians that is between a and b given three sides 
+    returns angle in radians that is between a and b given three sides,
+    using the law of cosines 
     """
     if (a != 0 and b != 0 ):
         top = (a**2 + b**2) - c**2
@@ -135,13 +137,12 @@ def get_angle_ab_acc(a, b, c):
     c = abs(c)
     if (a != 0 and b != 0 ):
         top = (a**2 + b**2) - c**2
-        print top
         if top != 0:
             bottom = 2 * a * b
             both = top/bottom
-            if abs(both) > 1:
+            if both > 1:
                 both = 1
-            elif abs(both) < -1:
+            elif both < -1:
                 both = -1
             return math.acos(both)
         else:
