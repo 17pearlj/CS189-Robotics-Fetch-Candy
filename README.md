@@ -1,6 +1,6 @@
 # Final Project: Fetch Candy 
 
-### The video can be found at this link: https://bit.ly/2E0FslG and the final paper is included in repository 
+### The video can be found at this link: https://youtu.be/zlhGdQ-zlv8 and the final paper is included in repository 
 
 ### The main file to be graded is main.py with modules pulled from move_script.py, cool_math.py and map_script.py
 
