@@ -1,6 +1,6 @@
 # Final Project
 
-### Please find video at this link: https://drive.google.com/file/d/1IqGjXG6V9vL5fZHGMZfZZd0SN70B9e95/view and final paper included in repository 
+### Please find video at this link: https://bit.ly/2E0FslG and final paper included in repository 
 
 ### The main file to be graded is main.py with modules pulled from move_script.py, cool_math.py and map_script.py
 
