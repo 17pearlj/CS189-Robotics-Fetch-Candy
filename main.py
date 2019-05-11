@@ -1,9 +1,13 @@
 """
-Milestone 2: Fetch Candy
-Main script controlling robot functionality
+Program to allow a robot to "Fetch Candy" from Dispensers when the ARTag number and base location are passed in 
+:param: ARTag number, Base Station Number
+:return: None
+
+Julia Pearl, Juliet Nwagw Ume-Ezeoke
+    
 """
 
-import random
+import random 
 import math
 from math import radians, degrees
 import cv2
@@ -26,6 +30,8 @@ import map_script
 import move_script
 import cool_math as cm 
 
+# used for determining last number of 
+# seen ARTags that are the same
 from itertools import groupby
 
 # valid ids for AR Tags
