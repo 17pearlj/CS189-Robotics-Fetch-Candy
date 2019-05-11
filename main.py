@@ -494,7 +494,7 @@ class Main2:
                        
                         else:
                           del past_orr [:] # clear list of past orientations
-                          self.execute_command(self.mover.stop())
+                          self.execute_command(self.mover.wait())
                           self.state2 = MOVE_ALPHA
 
 
@@ -587,7 +587,7 @@ class Main2:
                 elif self.state2 == DONE_PARKING:
                     print "in done parking"
 
-                    self.execute_command(self.mover.stop())
+                    self.execute_command(self.mover.wait())
                     # return succesful parking 
                     return 0
 

@@ -1,14 +1,61 @@
 """
 List of functions that are useful and can now be referenced more easily
 """
-
-
 import random
 import math
 from math import radians, degrees
 import cv2
 import numpy as np
 
+
+def third_side(a, b, gamma):
+    """
+    - Returns the third side of a triangle given two sides and one angle 
+    using the law of cosines
+    :param: length, length, angle in radians
+    :return: result of arcosine computation
+    """
+    return math.sqrt(a**2 + b**2 - (2 * a * b * math.cos(gamma)))
+
+def get_angle_ab(a, b, c):
+    """
+    returns angle in radians that is between a and b given three sides,
+    using the law of cosines 
+    :param: length, length, length
+    :return: result of arcosine computation
+    """
+    if (a != 0 and b != 0 ):
+        top = (a**2 + b**2) - c**2
+        if top > 0:
+            bottom = 2 * a * b
+            both = top/bottom
+            if abs(both) > 1:
+                both = 1
+                return math.acos(both)
+            else:
+                return math.acos(both)
+
+        else:
+            return -1000
+    else:
+            return -1000
+
+def prop_k_rot(radians_left):
+    """
+    allows the robot to increase its angular velocity 
+    when it is turning a super small angle by adjusting the 
+    not-so-constant constant of proportionality
+
+    :param: value in radians
+    :return: result of arcosine computation
+    """
+    k_rot = 2.5
+    if abs(radians_left) < radians(10):
+        k_rot = k_rot * 2
+    
+    return abs(k_rot)
+
+# ----- Functions taken from solutions code ------------
 
 def centroid(contour):
     """
@@ -100,77 +147,5 @@ def sign(val):
         return 1
     return 0
 
-def third_side(a, b, gamma):
-    """
-    returns the third side of a triangle given two sides and one angle 
-    using the law of cosines
-    """
-    return math.sqrt(a**2 + b**2 - (2 * a * b * math.cos(gamma)))
-
-def get_angle_ab(a, b, c):
-    """
-    returns angle in radians that is between a and b given three sides,
-    using the law of cosines 
-    """
-    if (a != 0 and b != 0 ):
-        top = (a**2 + b**2) - c**2
-        if top > 0:
-            bottom = 2 * a * b
-            both = top/bottom
-            if abs(both) > 1:
-                both = 1
-                return math.acos(both)
-            else:
-                return math.acos(both)
-
-        else:
-            return -1000
-    else:
-            return -1000
-
-def get_angle_ab_acc(a, b, c):
-    """
-    returns angle in radians that is between a and b given three sides 
-    """
-    a = abs(a)
-    b = abs(b)
-    c = abs(c)
-    if (a != 0 and b != 0 ):
-        top = (a**2 + b**2) - c**2
-        if top != 0:
-            bottom = 2 * a * b
-            both = top/bottom
-            if both > 1:
-                both = 1
-            elif both < -1:
-                both = -1
-            return math.acos(both)
-        else:
-            return -1000
-    else:
-            return -1000
-
-def prop_k_rot(radians_left):
-    """
-    allows the robot to increase its angular velocity when it is turning a small angle 
-    """
-    k_rot = 2.5
-    if abs(radians_left) < radians(10):
-        k_rot = k_rot * 2
-    
-    return abs(k_rot)
 
 
-def valid_list(my_list, num):
-    """
-    returns True if the last num numbers in a list are different 
-    """
-    if num > len(my_list):
-        return False
-    my_sum = sum( my_list[-num: len(my_list) + 1])
-    avg = my_sum/len(my_list)
-    # list is not valid - not made of values that are being updated 
-    if avg == my_list[-1]:
-        return False
-    else:
-        return True
