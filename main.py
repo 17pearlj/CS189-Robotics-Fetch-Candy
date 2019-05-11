@@ -95,20 +95,19 @@ class Main2:
         # dictionary that stores information about current ARTag
         self.markers = {}
 
-        # dictionary for ar ids and coordinates
+        # dictionary for ar ids and coordinates, second number how close robot needs to be from ar tag
         self.AR_ids = {
-            1: [(0, 0),  2, 0.9],
-            11: [(-13, -1), -5, 1.5],
-            2: [(-2, -9), 1, 1,],
-            3: [(-18, -9), 1, 0.8],
-            4: [(-31, -1), 0, 1],
-            51: [(-30, 1), -5, 1.5], #fake location to get around table
-            5: [(-23, 10), -1, 1.5],
-            61: [(-31, 8), -5, 1.5], #fake location to get around table
-            6: [(-15, 7), 2, 0.9],
-            7: [(-9, 10), -1, .75]
-            6: [(-12, 0), 2, 0.8],
-            7: [(-9, 9), 0, .8]
+            1: [(0, 0), 0.9],
+            11: [(-13, -1), 1.5],
+            2: [(-2, -9), 1,],
+            3: [(-18, -9), 0.8],
+            4: [(-31, -1), 1],
+            51: [(-30, 1), 1.5], #fake location to get around table
+            5: [(-23, 10), 1.5],
+            61: [(-31, 8), 1.5], #fake location to get around table
+            6: [(-15, 7), 0.9],
+            7: [(-9, 10), .75]}
+
 
         # vector orientation of ARTag relative to robot 
         # (usually an obtuse angle)
@@ -214,7 +213,7 @@ class Main2:
                     print "obstacle when very close to ar_tag!!"
                     sec = 15
 
-                # obstacle while ar_tag not spotted
+                # obstacle while ar_tag not spotted: while there is obs, turn then move forwards
                 elif (self.state == "avoid_obstacle" and self.close == False):
                     while(self.obs_side is not 0):
                         for i in range (2):
@@ -249,7 +248,9 @@ class Main2:
                 orienting = True 
 
                 # orienting stage 
-                if (not(self.AR_seen) or self.ar_z >= self.AR_ids[self.AR_curr][2]):
+                if (not(self.AR_seen) or self.ar_z >= self.AR_ids[self.AR_curr][1]):
+            
+                    # adjust angle to face EKF position
                     if (orienting):
                         pos = self.AR_ids[self.AR_curr][0]
                         dest_orientation = cm.orient(self.mapper.positionToMap(self.position, self.AR_ids[Home][0]), pos)
@@ -274,6 +275,7 @@ class Main2:
                             self.execute_command(move_cmd)
                             
                     if (not orienting):
+                        # big ar tag means edge case: 5/6 going to or returning from ar_tag
                         if ((self.AR_curr > 10)):
                             print "big ar tag"
                             travel_time = 100
@@ -288,9 +290,11 @@ class Main2:
                                     issue = True
                                     break
                             if (not issue):
-                                self.AR_curr = (self.AR_curr- 1) / 10
+                                self.AR_curr = (self.AR_curr - 1) / 10
                                 orienting = True
-                if (self.AR_seen and self.ar_z < self.AR_ids[self.AR_curr][2]):
+            
+                # when ar is seen and robot is close enough, change states
+                if (self.AR_seen and self.ar_z < self.AR_ids[self.AR_curr][1]):
                     print "see AR"
                     self.sounds.publish(Sound.ON)
                     self.prev_state = 'go_to_pos'
@@ -317,13 +321,18 @@ class Main2:
                     print "parking succesful"
                     self.AR_seen = False
                     
+                    
                     if (self.AR_curr is not Home):
+                        # edge cases:
                         if (self.AR_curr == 6 or self.AR_curr == 5):
                             self.AR_curr = (Home * 10) + 1
                         else:
+                        # go home
                             self.AR_curr = Home
                         self.prev_state = 'go_to_AR'
                         self.state = 'go_to_pos'
+            
+                    # already home
                     else:
                         self.AR_curr = -1
                         self.prev_state = 'go_to_AR'
@@ -703,7 +712,8 @@ class Main2:
         """
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data)
-
+            
+            # create mask for range 0.1 - 0.5 meters, restricting image to be directly in front
             mask = cv2.inRange(cv_image, 0.1, 0.5)
             mask[:, 0:180] = 0
             mask[:, 460:] = 0
@@ -732,11 +742,8 @@ class Main2:
         :return: None
         """
         if (data.state == BumperEvent.PRESSED):
-            print "BUMP"
             self.prev_state = self.state
             self.state = 'bumped'
-            
-            print self.state
 
     def shutdown(self):
         """
